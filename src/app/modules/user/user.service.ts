@@ -1,4 +1,5 @@
 import UserProfile from "./user.model";
+import { AuthModel } from "../auth/auth.model"; // Assuming this is where your User model is
 import { TUserProfile } from "./user.interface";
 import { Types } from "mongoose";
 
@@ -60,7 +61,51 @@ const getUserById = async (userId: string): Promise<TUserProfile | null> => {
   return user;
 };
 
+const updateUserProfile = async (
+  userId: string,
+  updateData: { name?: string; profilePicture?: string; bio?: string },
+): Promise<TUserProfile | null> => {
+  const session = await UserProfile.startSession();
+  session.startTransaction();
+
+  try {
+    const userProfile = await UserProfile.findOne({
+      user: new Types.ObjectId(userId),
+    }).session(session);
+
+    if (!userProfile) {
+      throw new Error("User profile not found");
+    }
+
+    if (updateData.name) {
+      await AuthModel.findByIdAndUpdate(userId, {
+        name: updateData.name,
+      }).session(session);
+    }
+
+    if (updateData.profilePicture) {
+      userProfile.profilePicture = updateData.profilePicture;
+    }
+
+    if (updateData.bio) {
+      userProfile.bio = updateData.bio;
+    }
+
+    await userProfile.save({ session });
+
+    await session.commitTransaction();
+    session.endSession();
+
+    return userProfile.populate("user", "name email role");
+  } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
+    throw error;
+  }
+};
+
 export const UserService = {
   getUsers,
   getUserById,
+  updateUserProfile,
 };
