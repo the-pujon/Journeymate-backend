@@ -18,6 +18,36 @@ const createComment = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const getCommentsByPostId = catchAsync(async (req: Request, res: Response) => {
+  const { postId } = req.params;
+
+  const result = await CommentService.getCommentsByPostId(postId);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Comments retrieved successfully",
+    data: result,
+  });
+});
+
+const editComment = catchAsync(async (req: Request, res: Response) => {
+  const userId = req.user?._id;
+  const { commentId } = req.params;
+  const { content } = req.body;
+
+  const result = await CommentService.editComment(userId, commentId, content);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Comment updated successfully",
+    data: result,
+  });
+});
+
 export const CommentController = {
   createComment,
+  getCommentsByPostId,
+  editComment,
 };

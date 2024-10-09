@@ -60,6 +60,52 @@ const createComment = async (
   }
 };
 
+const getCommentsByPostId = async (postId: string): Promise<TComment[]> => {
+  const comments = await Comment.find({ post: new Types.ObjectId(postId) })
+    .sort({ createdAt: -1 })
+    .populate({
+      path: "user",
+      select: "name email",
+    })
+    .populate({
+      path: "author",
+      select: "user profilePicture bio verified",
+      populate: {
+        path: "user",
+        select: "name email",
+      },
+    });
+
+  return comments;
+};
+
+const editComment = async (
+  userId: string,
+  commentId: string,
+  content: string,
+): Promise<TComment> => {
+  const comment = await Comment.findById(commentId);
+
+  if (!comment) {
+    throw new AppError(httpStatus.NOT_FOUND, "Comment not found");
+  }
+
+  // Check if the user is the author of the comment
+  if (comment.user!.toString() !== userId) {
+    throw new AppError(
+      httpStatus.FORBIDDEN,
+      "You are not authorized to edit this comment",
+    );
+  }
+
+  comment.content = content;
+  await comment.save();
+
+  return comment;
+};
+
 export const CommentService = {
   createComment,
+  getCommentsByPostId,
+  editComment,
 };
