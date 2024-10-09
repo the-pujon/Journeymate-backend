@@ -5,7 +5,7 @@ const postSchema = new Schema<TPost>(
   {
     author: {
       type: Schema.Types.ObjectId,
-      ref: "User",
+      ref: "UserProfile",
       required: true,
     },
     title: {

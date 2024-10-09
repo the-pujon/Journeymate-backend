@@ -12,7 +12,7 @@ export interface TUserProfile {
     userProfile: Types.ObjectId;
   }[];
   posts?: {
-    author: Types.ObjectId;
+    post: Types.ObjectId;
   }[];
   verified: boolean;
   verificationRequestDate?: Date;
