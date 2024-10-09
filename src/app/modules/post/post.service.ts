@@ -169,9 +169,51 @@ const getPostById = async (id: string): Promise<TPost | null> => {
   return post;
 };
 
+const updatePost = async (
+  postId: string,
+  userId: string,
+  updateData: Partial<TPost>,
+): Promise<TPost | null> => {
+  // Find the user's profile
+  const userProfile = await UserProfile.findOne({
+    user: new Types.ObjectId(userId),
+  });
+
+  if (!userProfile) {
+    throw new AppError(httpStatus.NOT_FOUND, "User profile not found");
+  }
+
+  // Find the post and check if the user is the author
+  const post = await Post.findOne({ _id: postId, author: userProfile._id });
+
+  if (!post) {
+    throw new AppError(
+      httpStatus.NOT_FOUND,
+      "Post not found or you're not authorized to update this post",
+    );
+  }
+
+  // Update the post
+  Object.assign(post, updateData);
+  await post.save();
+
+  // Populate the author information
+  await post.populate({
+    path: "author",
+    select: "user profilePicture bio verified",
+    populate: {
+      path: "user",
+      select: "name email",
+    },
+  });
+
+  return post;
+};
+
 export const PostService = {
   createPost,
   getPosts,
   getPostsByUserId,
   getPostById,
+  updatePost,
 };

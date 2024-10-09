@@ -39,3 +39,19 @@ export const getPostByIdValidation = z.object({
     }),
   }),
 });
+
+export const updatePostValidation = z.object({
+  params: z.object({
+    id: z.string().refine((val) => Types.ObjectId.isValid(val), {
+      message: "Invalid post ID",
+    }),
+  }),
+  body: z.object({
+    title: z.string().min(1).max(255).optional(),
+    content: z.string().min(1).optional(),
+    image: z.array(z.string().url()).optional(),
+    category: z.string().min(1).optional(),
+    tags: z.array(z.string()).optional(),
+    premium: z.boolean().optional(),
+  }),
+});

@@ -6,6 +6,7 @@ import {
   getPostsValidation,
   getPostsByUserIdValidation,
   getPostByIdValidation,
+  updatePostValidation,
 } from "./post.validation";
 import { authorization } from "../../middlewares/authorization";
 
@@ -30,6 +31,13 @@ router.get(
   "/:id",
   validateRequest(getPostByIdValidation),
   PostController.getPostById,
+);
+
+router.patch(
+  "/:id",
+  authorization("user"),
+  validateRequest(updatePostValidation),
+  PostController.updatePost,
 );
 
 export const PostRoutes = router;

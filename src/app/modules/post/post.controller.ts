@@ -66,9 +66,25 @@ const getPostById = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const updatePost = catchAsync(async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const userId = req.user?._id;
+  const updateData = req.body;
+
+  const result = await PostService.updatePost(id, userId, updateData);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Post updated successfully",
+    data: result,
+  });
+});
+
 export const PostController = {
   createPost,
   getPosts,
   getPostsByUserId,
   getPostById,
+  updatePost,
 };
