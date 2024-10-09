@@ -7,7 +7,6 @@ export interface TUser {
   email: string;
   password: string;
   role: TRole;
-  totalBuy?: number;
 }
 
 export interface AuthStaticMethods extends Model<TUser> {
