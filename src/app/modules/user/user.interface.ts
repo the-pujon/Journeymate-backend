@@ -4,8 +4,14 @@ export interface TUserProfile {
   user: Types.ObjectId;
   profilePicture?: string;
   bio?: string;
-  followers?: Types.ObjectId[];
-  following?: Types.ObjectId[];
-  posts?: Types.ObjectId[];
+  followers?: {
+    user: Types.ObjectId;
+  }[];
+  following?: {
+    user: Types.ObjectId;
+  }[];
+  posts?: {
+    author: Types.ObjectId;
+  }[];
   verified?: boolean;
 }
