@@ -22,11 +22,15 @@ const createPost = async (
       throw new AppError(httpStatus.NOT_FOUND, "User profile not found");
     }
 
+    // Set premium to true only if the user is verified, otherwise false
+    const isPremium = userProfile.verified ? true : false;
+
     const newPost = await Post.create(
       [
         {
           ...postData,
           author: userProfile._id, // Use UserProfile._id as the author
+          premium: isPremium,
         },
       ],
       { session },
