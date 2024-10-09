@@ -14,5 +14,12 @@ export interface TUserProfile {
   posts?: {
     author: Types.ObjectId;
   }[];
-  verified?: boolean;
+  verified: boolean;
+  verificationRequestDate?: Date;
+  totalUpvotes: number;
+}
+
+export interface VerificationRequest {
+  userId: string;
+  paymentIntentId: string;
 }

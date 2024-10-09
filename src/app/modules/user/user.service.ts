@@ -5,166 +5,6 @@ import AppError from "../../errors/AppError";
 import httpStatus from "http-status";
 import { AuthModel } from "../auth/auth.model";
 
-//const getUsers = async (): Promise<TUserProfile[]> => {
-//  const query = UserProfile.find()
-//    .populate("user", "name email")
-//    .populate({
-//      path: "following.user",
-//      select: "name email",
-//      populate: {
-//        path: "userProfile",
-//        select: "profilePicture",
-//      },
-//    })
-//    .populate({
-//      path: "followers.user",
-//      select: "name email",
-//      populate: {
-//        path: "userProfile",
-//        select: "profilePicture",
-//      },
-//    });
-
-//  const users = await query.exec();
-
-//  return users;
-//};
-
-//const getUsers = async (searchQuery?: string): Promise<TUserProfile[]> => {
-//  const aggregationPipeline = [];
-
-//  aggregationPipeline.push({
-//    $lookup: {
-//      from: "users",
-//      localField: "user",
-//      foreignField: "_id",
-//      as: "userDetails",
-//    },
-//  });
-
-//  aggregationPipeline.push({ $unwind: "$userDetails" });
-
-//  if (searchQuery) {
-//    aggregationPipeline.push({
-//      $match: {
-//        $or: [
-//          { "userDetails.name": { $regex: searchQuery, $options: "i" } },
-//          { "userDetails.email": { $regex: searchQuery, $options: "i" } },
-//        ],
-//      },
-//    });
-//  }
-
-//  aggregationPipeline.push({
-//    $project: {
-//      _id: 1,
-//      user: {
-//        _id: "$userDetails._id",
-//        name: "$userDetails.name",
-//        email: "$userDetails.email",
-//      },
-//      verified: 1,
-//      followers: 1,
-//      following: 1,
-//      posts: 1,
-//      createdAt: 1,
-//      updatedAt: 1,
-//    },
-//  });
-
-//  const users = await UserProfile.aggregate(aggregationPipeline);
-
-//  return users;
-//};
-
-//const getUsers = async (searchQuery?: string): Promise<TUserProfile[]> => {
-//    const aggregationPipeline = [
-//      {
-//        $lookup: {
-//          from: "users", // Assuming your AuthModel collection is named "users"
-//          localField: "user",
-//          foreignField: "_id",
-//          as: "userDetails"
-//        }
-//      },
-//      { $unwind: "$userDetails" },
-//      {
-//        $lookup: {
-//          from: "userprofiles",
-//          localField: "following.user",
-//          foreignField: "user",
-//          as: "followingDetails"
-//        }
-//      },
-//      {
-//        $lookup: {
-//          from: "userprofiles",
-//          localField: "followers.user",
-//          foreignField: "user",
-//          as: "followerDetails"
-//        }
-//      }
-//    ];
-
-//    if (searchQuery) {
-//      const regex = new RegExp(searchQuery, 'i');
-//      aggregationPipeline.unshift({
-//        $match: {
-//          $or: [
-//            { "userDetails.name": { $regex: regex } },
-//            { "userDetails.email": { $regex: regex } }
-//          ]
-//        }
-//      });
-//    }
-
-//    aggregationPipeline.push({
-//      $project: {
-//        _id: 1,
-//        user: {
-//          _id: "$userDetails._id",
-//          name: "$userDetails.name",
-//          email: "$userDetails.email"
-//        },
-//        profilePicture: 1,
-//        bio: 1,
-//        verified: 1,
-//        following: {
-//          $map: {
-//            input: "$followingDetails",
-//            as: "follow",
-//            in: {
-//              user: {
-//                _id: "$$follow.user",
-//                name: "$$follow.userDetails.name",
-//                email: "$$follow.userDetails.email"
-//              }
-//            }
-//          }
-//        },
-//        followers: {
-//          $map: {
-//            input: "$followerDetails",
-//            as: "follower",
-//            in: {
-//              user: {
-//                _id: "$$follower.user",
-//                name: "$$follower.userDetails.name",
-//                email: "$$follower.userDetails.email"
-//              }
-//            }
-//          }
-//        },
-//        createdAt: 1,
-//        updatedAt: 1
-//      }
-//    });
-
-//    const users = await UserProfile.aggregate(aggregationPipeline);
-
-//    return users;
-//  };
-
 const getUsers = async (searchQuery?: string): Promise<TUserProfile[]> => {
   // Define the search filter if a search query is provided
   const filter = searchQuery
@@ -422,10 +262,50 @@ const unfollowUser = async (
   }
 };
 
+//TODO: Test this
+const requestVerification = async (
+  userId: string,
+  paymentIntentId: string,
+): Promise<TUserProfile | null> => {
+  const userProfile = await UserProfile.findOne({
+    user: new Types.ObjectId(userId),
+  });
+
+  if (!userProfile) {
+    throw new AppError(httpStatus.NOT_FOUND, "User profile not found");
+  }
+
+  if (userProfile.verified) {
+    throw new AppError(httpStatus.BAD_REQUEST, "User is already verified");
+  }
+
+  if (userProfile.totalUpvotes < 1) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      "User must have at least 1 upvote to request verification",
+    );
+  }
+
+  // TODO: Implement actual payment verification with AAMARPAY or Stripe
+  if (!paymentIntentId) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      "Payment information is missing",
+    );
+  }
+
+  userProfile.verified = true;
+  userProfile.verificationRequestDate = new Date();
+  await userProfile.save();
+
+  return userProfile;
+};
+
 export const UserService = {
   getUsers,
   getUserById,
   updateUserProfile,
   updateUserFollowing,
   unfollowUser,
+  requestVerification,
 };

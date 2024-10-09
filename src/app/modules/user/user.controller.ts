@@ -78,10 +78,25 @@ const unfollowUser = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const requestVerification = catchAsync(async (req: Request, res: Response) => {
+  const userId = req.user?._id;
+  const { paymentIntentId } = req.body;
+
+  const result = await UserService.requestVerification(userId, paymentIntentId);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Verification request submitted successfully",
+    data: result,
+  });
+});
+
 export const UserController = {
   getUsers,
   getUserById,
   updateUserProfile,
   updateUserFollowing,
   unfollowUser,
+  requestVerification,
 };

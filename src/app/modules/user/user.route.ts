@@ -5,6 +5,7 @@ import {
   updateUserProfileValidation,
   updateUserFollowingValidation,
   unfollowUserValidation,
+  verificationRequestValidation,
 } from "./user.validation";
 import { authorization } from "../../middlewares/authorization";
 
@@ -30,6 +31,13 @@ router.post(
   authorization("admin", "user"),
   validateRequest(unfollowUserValidation),
   UserController.unfollowUser,
+);
+
+router.post(
+  "/request-verification",
+  authorization("user"),
+  validateRequest(verificationRequestValidation),
+  UserController.requestVerification,
 );
 
 export const UserRoutes = router;

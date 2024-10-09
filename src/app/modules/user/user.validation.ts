@@ -24,3 +24,9 @@ export const unfollowUserValidation = z.object({
     }),
   }),
 });
+
+export const verificationRequestValidation = z.object({
+  body: z.object({
+    paymentIntentId: z.string(),
+  }),
+});

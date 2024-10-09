@@ -42,6 +42,13 @@ const userProfileSchema = new Schema<TUserProfile>(
       type: Boolean,
       default: false,
     },
+    verificationRequestDate: {
+      type: Date,
+    },
+    totalUpvotes: {
+      type: Number,
+      default: 0,
+    },
   },
   {
     timestamps: true,
