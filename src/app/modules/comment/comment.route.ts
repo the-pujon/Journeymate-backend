@@ -5,6 +5,7 @@ import {
   createCommentValidation,
   getCommentsByPostIdValidation,
   editCommentValidation,
+  deleteCommentValidation,
 } from "./comment.validation";
 import { authorization } from "../../middlewares/authorization";
 
@@ -28,6 +29,13 @@ router.patch(
   authorization("user"),
   validateRequest(editCommentValidation),
   CommentController.editComment,
+);
+
+router.delete(
+  "/:commentId",
+  authorization("user"),
+  validateRequest(deleteCommentValidation),
+  CommentController.deleteComment,
 );
 
 export const CommentRoutes = router;

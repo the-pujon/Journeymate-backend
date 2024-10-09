@@ -10,6 +10,8 @@ export interface TPost {
   premium?: boolean;
   upVotes?: number;
   downVotes?: number;
-  comments?: Types.ObjectId[];
+  comments?: {
+    comment: Types.ObjectId;
+  };
   totalComments?: number;
 }

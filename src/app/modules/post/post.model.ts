@@ -42,9 +42,11 @@ const postSchema = new Schema<TPost>(
     },
     comments: [
       {
-        type: Schema.Types.ObjectId,
-        ref: "Comment",
-        default: undefined,
+        comment: {
+          type: Schema.Types.ObjectId,
+          ref: "Comment",
+          default: undefined,
+        },
       },
     ],
     totalComments: {

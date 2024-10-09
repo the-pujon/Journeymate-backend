@@ -28,3 +28,11 @@ export const editCommentValidation = z.object({
     content: z.string().min(1, "Comment content is required"),
   }),
 });
+
+export const deleteCommentValidation = z.object({
+  params: z.object({
+    commentId: z.string().refine((val) => Types.ObjectId.isValid(val), {
+      message: "Invalid comment ID",
+    }),
+  }),
+});

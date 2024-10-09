@@ -104,8 +104,53 @@ const editComment = async (
   return comment;
 };
 
+const deleteComment = async (
+  userId: string,
+  commentId: string,
+): Promise<void> => {
+  const session = await Comment.startSession();
+  session.startTransaction();
+
+  try {
+    const comment = await Comment.findById(commentId).session(session);
+
+    if (!comment) {
+      throw new AppError(httpStatus.NOT_FOUND, "Comment not found");
+    }
+
+    // Check if the user is the author of the comment
+    if (comment.user!.toString() !== userId) {
+      throw new AppError(
+        httpStatus.FORBIDDEN,
+        "You are not authorized to delete this comment",
+      );
+    }
+
+    // Delete the comment
+    await Comment.findByIdAndDelete(commentId).session(session);
+
+    // Decrease the totalComments count in the post and remove the comment ID from the comments array
+    await Post.findByIdAndUpdate(
+      comment.post,
+      {
+        $inc: { totalComments: -1 },
+        $pull: { comments: { comment: new Types.ObjectId(commentId) } },
+      },
+      { session },
+    );
+
+    await session.commitTransaction();
+  } catch (error) {
+    await session.abortTransaction();
+    throw error;
+  } finally {
+    session.endSession();
+  }
+};
+
 export const CommentService = {
   createComment,
   getCommentsByPostId,
   editComment,
+  deleteComment,
 };
