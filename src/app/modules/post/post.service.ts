@@ -218,10 +218,53 @@ const updatePost = async (
   return post;
 };
 
+const deletePost = async (
+  postId: string,
+  userId: string,
+  userRole: string,
+): Promise<TPost | null> => {
+  const post = await Post.findById(postId);
+
+  if (!post) {
+    throw new AppError(httpStatus.NOT_FOUND, "Post not found");
+  }
+
+  const userProfile = await UserProfile.findOne({
+    user: new Types.ObjectId(userId),
+  });
+
+  if (!userProfile) {
+    throw new AppError(httpStatus.NOT_FOUND, "User profile not found");
+  }
+
+  // Check if the user is the author of the post or an admin
+  if (
+    post.author.toString() !== userProfile._id.toString() &&
+    userRole !== "admin"
+  ) {
+    throw new AppError(
+      httpStatus.FORBIDDEN,
+      "You are not authorized to delete this post",
+    );
+  }
+
+  // Remove the post from the user's posts array
+  await UserProfile.updateOne(
+    { _id: post.author },
+    { $pull: { posts: { post: post._id } } },
+  );
+
+  // Delete the post
+  const deletedPost = await Post.findByIdAndDelete(postId);
+
+  return deletedPost;
+};
+
 export const PostService = {
   createPost,
   getPosts,
   getPostsByUserId,
   getPostById,
   updatePost,
+  deletePost,
 };

@@ -56,3 +56,11 @@ export const updatePostValidation = z.object({
     })
     .strict(), // This ensures no extra fields are allowed
 });
+
+export const deletePostValidation = z.object({
+  params: z.object({
+    id: z.string().refine((val) => Types.ObjectId.isValid(val), {
+      message: "Invalid post ID",
+    }),
+  }),
+});

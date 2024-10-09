@@ -81,10 +81,26 @@ const updatePost = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const deletePost = catchAsync(async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const userId = req.user?._id;
+  const userRole = req.user?.role;
+
+  const result = await PostService.deletePost(id, userId, userRole);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Post deleted successfully",
+    data: result,
+  });
+});
+
 export const PostController = {
   createPost,
   getPosts,
   getPostsByUserId,
   getPostById,
   updatePost,
+  deletePost,
 };

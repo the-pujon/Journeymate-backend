@@ -7,6 +7,7 @@ import {
   getPostsByUserIdValidation,
   getPostByIdValidation,
   updatePostValidation,
+  deletePostValidation,
 } from "./post.validation";
 import { authorization } from "../../middlewares/authorization";
 
@@ -38,6 +39,13 @@ router.patch(
   authorization("user"),
   validateRequest(updatePostValidation),
   PostController.updatePost,
+);
+
+router.delete(
+  "/:id",
+  authorization("admin", "user"),
+  validateRequest(deletePostValidation),
+  PostController.deletePost,
 );
 
 export const PostRoutes = router;
