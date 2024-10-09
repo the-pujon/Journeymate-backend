@@ -46,12 +46,13 @@ export const updatePostValidation = z.object({
       message: "Invalid post ID",
     }),
   }),
-  body: z.object({
-    title: z.string().min(1).max(255).optional(),
-    content: z.string().min(1).optional(),
-    image: z.array(z.string().url()).optional(),
-    category: z.string().min(1).optional(),
-    tags: z.array(z.string()).optional(),
-    premium: z.boolean().optional(),
-  }),
+  body: z
+    .object({
+      title: z.string().min(1).max(255).optional(),
+      content: z.string().min(1).optional(),
+      image: z.array(z.string().url()).optional(),
+      category: z.string().min(1).optional(),
+      tags: z.array(z.string()).optional(),
+    })
+    .strict(), // This ensures no extra fields are allowed
 });
