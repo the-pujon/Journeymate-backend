@@ -5,7 +5,7 @@ const commentSchema = new Schema<TComment>(
   {
     author: {
       type: Schema.Types.ObjectId,
-      ref: "User",
+      ref: "UserProfile",
       required: true,
     },
     content: {
@@ -28,7 +28,7 @@ const commentSchema = new Schema<TComment>(
     user: {
       type: Schema.Types.ObjectId,
       ref: "User",
-      default: undefined,
+      required: true,
     },
   },
   {
