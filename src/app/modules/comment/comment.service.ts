@@ -43,10 +43,13 @@ const createComment = async (
       throw new AppError(httpStatus.BAD_REQUEST, "Failed to create comment");
     }
 
-    // Increment the totalComments count in the post
+    // Increment the totalComments count and add the comment ID to the comments array in the post
     await Post.findByIdAndUpdate(
       postId,
-      { $inc: { totalComments: 1 } },
+      {
+        $inc: { totalComments: 1 },
+        $push: { comments: { comment: newComment[0]._id } },
+      },
       { session },
     );
 
