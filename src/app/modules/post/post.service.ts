@@ -197,8 +197,12 @@ const updatePost = async (
     );
   }
 
-  // Update the post
-  Object.assign(post, updateData);
+  // Remove premium, upVotes, and downVotes from updateData
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { premium, upVotes, downVotes, ...allowedUpdates } = updateData;
+
+  // Update the post with only allowed fields
+  Object.assign(post, allowedUpdates);
   await post.save();
 
   // Populate the author information
