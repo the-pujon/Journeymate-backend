@@ -21,8 +21,13 @@ const authSchema = new Schema<TUser, AuthStaticMethods>({
     type: String,
     default: "user",
   },
-  totalBuy: {
+  recoveryCode: {
     type: String,
+    select: false,
+  },
+  recoveryCodeExpires: {
+    type: Date,
+    select: false,
   },
 });
 

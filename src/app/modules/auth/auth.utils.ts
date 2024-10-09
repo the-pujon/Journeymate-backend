@@ -1,5 +1,6 @@
 import jwt from "jsonwebtoken";
 import { TUser } from "./auth.interface";
+import crypto from "crypto";
 
 export const createToken = (
   jwtPayload: {
@@ -18,4 +19,9 @@ export const omitPassword = (user: TUser) => {
   delete plainUser._v;
 
   return plainUser;
+};
+
+//generate recovery code
+export const generateRecoveryCode = () => {
+  return crypto.randomBytes(3).toString("hex").toUpperCase();
 };
