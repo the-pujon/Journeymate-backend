@@ -1,5 +1,6 @@
 import UserProfile from "./user.model";
 import { TUserProfile } from "./user.interface";
+import { Types } from "mongoose";
 
 const getUsers = async (searchQuery?: string): Promise<TUserProfile[]> => {
   const aggregationPipeline = [];
@@ -48,6 +49,18 @@ const getUsers = async (searchQuery?: string): Promise<TUserProfile[]> => {
   return users;
 };
 
+const getUserById = async (userId: string): Promise<TUserProfile | null> => {
+  const user = await UserProfile.findOne({
+    user: new Types.ObjectId(userId),
+  }).populate({
+    path: "user",
+    select: "name email",
+  });
+
+  return user;
+};
+
 export const UserService = {
   getUsers,
+  getUserById,
 };
