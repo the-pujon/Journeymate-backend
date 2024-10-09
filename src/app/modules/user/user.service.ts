@@ -342,9 +342,90 @@ const updateUserFollowing = async (
   }
 };
 
+const unfollowUser = async (
+  followerUserId: string,
+  unfollowUserId: string,
+): Promise<{
+  follower: TUserProfile | null;
+  unfollowed: TUserProfile | null;
+}> => {
+  if (followerUserId === unfollowUserId) {
+    throw new AppError(httpStatus.BAD_REQUEST, "You cannot unfollow yourself");
+  }
+
+  const session = await UserProfile.startSession();
+  session.startTransaction();
+
+  try {
+    const followerProfile = await UserProfile.findOne({
+      user: new Types.ObjectId(followerUserId),
+    }).session(session);
+    const unfollowedProfile = await UserProfile.findOne({
+      user: new Types.ObjectId(unfollowUserId),
+    }).session(session);
+
+    if (!followerProfile || !unfollowedProfile) {
+      throw new AppError(httpStatus.NOT_FOUND, "User profile not found");
+    }
+
+    // Initialize following and followers arrays if they don't exist
+    if (!followerProfile.following) followerProfile.following = [];
+    if (!unfollowedProfile.followers) unfollowedProfile.followers = [];
+
+    // Check if already following
+    const isFollowing = followerProfile.following.some(
+      (f) =>
+        f.userProfile &&
+        f.userProfile.toString() === unfollowedProfile._id.toString(),
+    );
+
+    if (!isFollowing) {
+      throw new AppError(
+        httpStatus.BAD_REQUEST,
+        "You are not following this user",
+      );
+    }
+
+    // Remove unfollowed user from follower's following list
+    followerProfile.following = followerProfile.following.filter(
+      (f) =>
+        f.userProfile &&
+        f.userProfile.toString() !== unfollowedProfile._id.toString(),
+    );
+    await followerProfile.save({ session });
+
+    // Remove follower from unfollowed user's followers list
+    unfollowedProfile.followers = unfollowedProfile.followers.filter(
+      (f) =>
+        f.userProfile &&
+        f.userProfile.toString() !== followerProfile._id.toString(),
+    );
+    await unfollowedProfile.save({ session });
+
+    await session.commitTransaction();
+    session.endSession();
+
+    return {
+      follower: await followerProfile.populate({
+        path: "user",
+        select: "name email",
+      }),
+      unfollowed: await unfollowedProfile.populate({
+        path: "user",
+        select: "name email",
+      }),
+    };
+  } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
+    throw error;
+  }
+};
+
 export const UserService = {
   getUsers,
   getUserById,
   updateUserProfile,
   updateUserFollowing,
+  unfollowUser,
 };

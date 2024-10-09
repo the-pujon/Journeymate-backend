@@ -64,9 +64,24 @@ const updateUserFollowing = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const unfollowUser = catchAsync(async (req: Request, res: Response) => {
+  const followerId = req.user?._id; // Assuming the user ID is attached to the request by auth middleware
+  const { unfollowId } = req.body;
+
+  const result = await UserService.unfollowUser(followerId, unfollowId);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "User unfollowed successfully",
+    data: result,
+  });
+});
+
 export const UserController = {
   getUsers,
   getUserById,
   updateUserProfile,
   updateUserFollowing,
+  unfollowUser,
 };

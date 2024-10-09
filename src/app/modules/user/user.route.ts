@@ -4,6 +4,7 @@ import validateRequest from "../../middlewares/validateRequest";
 import {
   updateUserProfileValidation,
   updateUserFollowingValidation,
+  unfollowUserValidation,
 } from "./user.validation";
 import { authorization } from "../../middlewares/authorization";
 
@@ -22,6 +23,13 @@ router.post(
   authorization("admin", "user"),
   validateRequest(updateUserFollowingValidation),
   UserController.updateUserFollowing,
+);
+
+router.post(
+  "/unfollow",
+  authorization("admin", "user"),
+  validateRequest(unfollowUserValidation),
+  UserController.unfollowUser,
 );
 
 export const UserRoutes = router;

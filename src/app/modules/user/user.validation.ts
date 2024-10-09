@@ -16,3 +16,11 @@ export const updateUserFollowingValidation = z.object({
     }),
   }),
 });
+
+export const unfollowUserValidation = z.object({
+  body: z.object({
+    unfollowId: z.string().refine((val) => Types.ObjectId.isValid(val), {
+      message: "Invalid unfollowId",
+    }),
+  }),
+});
