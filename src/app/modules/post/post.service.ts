@@ -64,6 +64,65 @@ const createPost = async (
   }
 };
 
+interface GetPostsOptions {
+  category?: string;
+  author?: string;
+  searchTerm?: string;
+  sortOrder: "asc" | "desc";
+}
+
+const getPosts = async ({
+  category,
+  author,
+  searchTerm,
+  sortOrder,
+}: GetPostsOptions): Promise<TPost[]> => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const query: any = {};
+
+  if (category) {
+    query.category = category;
+  }
+
+  if (author) {
+    const userProfile = await UserProfile.findOne({
+      user: new Types.ObjectId(author),
+    });
+    if (userProfile) {
+      query.author = userProfile._id;
+    } else {
+      // If no user profile found, return an empty array
+      return [];
+    }
+  }
+
+  if (searchTerm) {
+    query.$or = [
+      { title: { $regex: searchTerm, $options: "i" } },
+      { content: { $regex: searchTerm, $options: "i" } },
+      { tags: { $in: [new RegExp(searchTerm, "i")] } },
+    ];
+  }
+
+  const sortOptions: { [key: string]: "asc" | "desc" } = {
+    upVotes: sortOrder,
+  };
+
+  const posts = await Post.find(query)
+    .sort(sortOptions)
+    .populate({
+      path: "author",
+      select: "user profilePicture bio verified",
+      populate: {
+        path: "user",
+        select: "name email",
+      },
+    });
+
+  return posts;
+};
+
 export const PostService = {
   createPost,
+  getPosts,
 };

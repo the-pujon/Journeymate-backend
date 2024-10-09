@@ -10,3 +10,12 @@ export const createPostValidation = z.object({
     premium: z.boolean().optional(),
   }),
 });
+
+export const getPostsValidation = z.object({
+  query: z.object({
+    category: z.string().optional(),
+    author: z.string().optional(),
+    searchTerm: z.string().optional(),
+    sortOrder: z.enum(['asc', 'desc']).optional().default('desc'),
+  }),
+});
