@@ -5,8 +5,7 @@ import sendResponse from "../../utils/sendResponse";
 import { UserService } from "./user.service";
 
 const getUsers = catchAsync(async (req: Request, res: Response) => {
-  const { search } = req.query;
-  const result = await UserService.getUsers(search as string);
+  const result = await UserService.getUsers();
 
   sendResponse(res, {
     statusCode: httpStatus.OK,
@@ -51,8 +50,23 @@ const updateUserProfile = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const updateUserFollowing = catchAsync(async (req: Request, res: Response) => {
+  const followerId = req.user?._id; // Assuming the user ID is attached to the request by auth middleware
+  const { followingId } = req.body;
+
+  const result = await UserService.updateUserFollowing(followerId, followingId);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "User following updated successfully",
+    data: result,
+  });
+});
+
 export const UserController = {
   getUsers,
   getUserById,
   updateUserProfile,
+  updateUserFollowing,
 };

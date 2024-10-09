@@ -1,14 +1,15 @@
 import { Types } from "mongoose";
 
 export interface TUserProfile {
+  _id: Types.ObjectId;
   user: Types.ObjectId;
   profilePicture?: string;
   bio?: string;
   followers?: {
-    user: Types.ObjectId;
+    userProfile: Types.ObjectId;
   }[];
   following?: {
-    user: Types.ObjectId;
+    userProfile: Types.ObjectId;
   }[];
   posts?: {
     author: Types.ObjectId;

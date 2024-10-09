@@ -16,17 +16,17 @@ const userProfileSchema = new Schema<TUserProfile>(
     },
     followers: [
       {
-        user: {
+        userProfile: {
           type: Schema.Types.ObjectId,
-          ref: "User",
+          ref: "UserProfile",
         },
       },
     ],
     following: [
       {
-        user: {
+        userProfile: {
           type: Schema.Types.ObjectId,
-          ref: "User",
+          ref: "UserProfile",
         },
       },
     ],
