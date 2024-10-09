@@ -2,6 +2,7 @@ import { Types } from "mongoose";
 import Post from "./post.model";
 import UserProfile from "../user/user.model";
 import Vote from "../vote/vote.model";
+import Comment from "../comment/comment.model"; // Add this import
 import { TPost } from "./post.interface";
 import AppError from "../../errors/AppError";
 import httpStatus from "http-status";
@@ -224,41 +225,59 @@ const deletePost = async (
   userId: string,
   userRole: string,
 ): Promise<TPost | null> => {
-  const post = await Post.findById(postId);
+  const session = await Post.startSession();
+  session.startTransaction();
 
-  if (!post) {
-    throw new AppError(httpStatus.NOT_FOUND, "Post not found");
-  }
+  try {
+    const post = await Post.findById(postId).session(session);
 
-  const userProfile = await UserProfile.findOne({
-    user: new Types.ObjectId(userId),
-  });
+    if (!post) {
+      throw new AppError(httpStatus.NOT_FOUND, "Post not found");
+    }
 
-  if (!userProfile) {
-    throw new AppError(httpStatus.NOT_FOUND, "User profile not found");
-  }
+    const userProfile = await UserProfile.findOne({
+      user: new Types.ObjectId(userId),
+    }).session(session);
 
-  // Check if the user is the author of the post or an admin
-  if (
-    post.author.toString() !== userProfile._id.toString() &&
-    userRole !== "admin"
-  ) {
-    throw new AppError(
-      httpStatus.FORBIDDEN,
-      "You are not authorized to delete this post",
+    if (!userProfile) {
+      throw new AppError(httpStatus.NOT_FOUND, "User profile not found");
+    }
+
+    // Check if the user is the author of the post or an admin
+    if (
+      post.author.toString() !== userProfile._id.toString() &&
+      userRole !== "admin"
+    ) {
+      throw new AppError(
+        httpStatus.FORBIDDEN,
+        "You are not authorized to delete this post",
+      );
+    }
+
+    // Remove the post from the user's posts array
+    await UserProfile.updateOne(
+      { _id: post.author },
+      { $pull: { posts: { post: post._id } } },
+      { session },
     );
+
+    // Delete all comments associated with this post
+    await Comment.deleteMany({ post: post._id }).session(session);
+
+    // Delete all votes associated with this post
+    await Vote.deleteMany({ post: post._id }).session(session);
+
+    // Delete the post
+    const deletedPost = await Post.findByIdAndDelete(postId).session(session);
+
+    await session.commitTransaction();
+    return deletedPost;
+  } catch (error) {
+    await session.abortTransaction();
+    throw error;
+  } finally {
+    session.endSession();
   }
-
-  // Remove the post from the user's posts array
-  await UserProfile.updateOne(
-    { _id: post.author },
-    { $pull: { posts: { post: post._id } } },
-  );
-
-  // Delete the post
-  const deletedPost = await Post.findByIdAndDelete(postId);
-
-  return deletedPost;
 };
 
 const upvotePost = async (postId: string, userId: string): Promise<TPost> => {
