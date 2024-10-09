@@ -47,6 +47,10 @@ const postSchema = new Schema<TPost>(
         default: undefined,
       },
     ],
+    totalComments: {
+      type: Number,
+      default: 0,
+    },
   },
   {
     timestamps: true,

@@ -11,4 +11,5 @@ export interface TPost {
   upVotes?: number;
   downVotes?: number;
   comments?: Types.ObjectId[];
+  totalComments?: number;
 }

@@ -96,6 +96,34 @@ const deletePost = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const upvotePost = catchAsync(async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const userId = req.user?._id;
+
+  const result = await PostService.upvotePost(id, userId);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Post upvoted successfully",
+    data: result,
+  });
+});
+
+const downvotePost = catchAsync(async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const userId = req.user?._id;
+
+  const result = await PostService.downvotePost(id, userId);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Post downvoted successfully",
+    data: result,
+  });
+});
+
 export const PostController = {
   createPost,
   getPosts,
@@ -103,4 +131,6 @@ export const PostController = {
   getPostById,
   updatePost,
   deletePost,
+  upvotePost,
+  downvotePost,
 };

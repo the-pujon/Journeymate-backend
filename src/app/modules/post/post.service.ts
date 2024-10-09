@@ -1,6 +1,7 @@
 import { Types } from "mongoose";
 import Post from "./post.model";
 import UserProfile from "../user/user.model";
+import Vote from "../vote/vote.model";
 import { TPost } from "./post.interface";
 import AppError from "../../errors/AppError";
 import httpStatus from "http-status";
@@ -260,6 +261,140 @@ const deletePost = async (
   return deletedPost;
 };
 
+const upvotePost = async (postId: string, userId: string): Promise<TPost> => {
+  const session = await Post.startSession();
+  session.startTransaction();
+
+  try {
+    const post = await Post.findById(postId).session(session);
+    if (!post) {
+      throw new AppError(httpStatus.NOT_FOUND, "Post not found");
+    }
+
+    const userProfile = await UserProfile.findOne({
+      user: new Types.ObjectId(userId),
+    }).session(session);
+    if (!userProfile) {
+      throw new AppError(httpStatus.NOT_FOUND, "User profile not found");
+    }
+
+    // Check if the user has already voted on this post
+    const existingVote = await Vote.findOne({
+      user: userId,
+      post: postId,
+    }).session(session);
+
+    if (existingVote) {
+      if (existingVote.voteType === "upvote") {
+        throw new AppError(
+          httpStatus.BAD_REQUEST,
+          "You have already upvoted this post",
+        );
+      } else {
+        // Change downvote to upvote
+        existingVote.voteType = "upvote";
+        await existingVote.save({ session });
+        post.upVotes! += 1;
+        post.downVotes! -= 1;
+      }
+    } else {
+      // Create new upvote
+      await Vote.create([{ user: userId, post: postId, voteType: "upvote" }], {
+        session,
+      });
+      post.upVotes! += 1;
+    }
+
+    await post.save({ session });
+
+    // Update author's totalUpvotes
+    const authorProfile = await UserProfile.findById(post.author).session(
+      session,
+    );
+    if (authorProfile) {
+      authorProfile.totalUpvotes += 1;
+      await authorProfile.save({ session });
+    }
+
+    await session.commitTransaction();
+    return post;
+  } catch (error) {
+    await session.abortTransaction();
+    throw error;
+  } finally {
+    session.endSession();
+  }
+};
+
+const downvotePost = async (postId: string, userId: string): Promise<TPost> => {
+  const session = await Post.startSession();
+  session.startTransaction();
+
+  try {
+    const post = await Post.findById(postId).session(session);
+    if (!post) {
+      throw new AppError(httpStatus.NOT_FOUND, "Post not found");
+    }
+
+    const userProfile = await UserProfile.findOne({
+      user: new Types.ObjectId(userId),
+    }).session(session);
+    if (!userProfile) {
+      throw new AppError(httpStatus.NOT_FOUND, "User profile not found");
+    }
+
+    // Check if the user has already voted on this post
+    const existingVote = await Vote.findOne({
+      user: userId,
+      post: postId,
+    }).session(session);
+
+    if (existingVote) {
+      if (existingVote.voteType === "downvote") {
+        throw new AppError(
+          httpStatus.BAD_REQUEST,
+          "You have already downvoted this post",
+        );
+      } else {
+        // Change upvote to downvote
+        existingVote.voteType = "downvote";
+        await existingVote.save({ session });
+        post.upVotes! -= 1;
+        post.downVotes! += 1;
+
+        // Decrease author's totalUpvotes
+        const authorProfile = await UserProfile.findById(post.author).session(
+          session,
+        );
+        if (authorProfile) {
+          authorProfile.totalUpvotes = Math.max(
+            authorProfile.totalUpvotes - 1,
+            0,
+          );
+          await authorProfile.save({ session });
+        }
+      }
+    } else {
+      // Create new downvote
+      await Vote.create(
+        [{ user: userId, post: postId, voteType: "downvote" }],
+        { session },
+      );
+      post.downVotes! += 1;
+    }
+
+    await post.save({ session });
+
+    await session.commitTransaction();
+    return post;
+  } catch (error) {
+    await session.abortTransaction();
+    throw error;
+  } finally {
+    session.endSession();
+  }
+};
+
 export const PostService = {
   createPost,
   getPosts,
@@ -267,4 +402,6 @@ export const PostService = {
   getPostById,
   updatePost,
   deletePost,
+  upvotePost,
+  downvotePost,
 };

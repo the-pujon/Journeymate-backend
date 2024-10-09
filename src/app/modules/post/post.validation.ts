@@ -64,3 +64,19 @@ export const deletePostValidation = z.object({
     }),
   }),
 });
+
+export const upvotePostValidation = z.object({
+  params: z.object({
+    id: z.string().refine((val) => Types.ObjectId.isValid(val), {
+      message: "Invalid post ID",
+    }),
+  }),
+});
+
+export const downvotePostValidation = z.object({
+  params: z.object({
+    id: z.string().refine((val) => Types.ObjectId.isValid(val), {
+      message: "Invalid post ID",
+    }),
+  }),
+});

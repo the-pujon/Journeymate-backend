@@ -8,6 +8,8 @@ import {
   getPostByIdValidation,
   updatePostValidation,
   deletePostValidation,
+  upvotePostValidation,
+  downvotePostValidation,
 } from "./post.validation";
 import { authorization } from "../../middlewares/authorization";
 
@@ -46,6 +48,20 @@ router.delete(
   authorization("admin", "user"),
   validateRequest(deletePostValidation),
   PostController.deletePost,
+);
+
+router.post(
+  "/:id/upvote",
+  authorization("user"),
+  validateRequest(upvotePostValidation),
+  PostController.upvotePost,
+);
+
+router.post(
+  "/:id/downvote",
+  authorization("user"),
+  validateRequest(downvotePostValidation),
+  PostController.downvotePost,
 );
 
 export const PostRoutes = router;
