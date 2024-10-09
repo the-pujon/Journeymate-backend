@@ -5,6 +5,7 @@ import {
   createPostValidation,
   getPostsValidation,
   getPostsByUserIdValidation,
+  getPostByIdValidation,
 } from "./post.validation";
 import { authorization } from "../../middlewares/authorization";
 
@@ -23,6 +24,12 @@ router.get(
   "/user/:userId",
   validateRequest(getPostsByUserIdValidation),
   PostController.getPostsByUserId,
+);
+
+router.get(
+  "/:id",
+  validateRequest(getPostByIdValidation),
+  PostController.getPostById,
 );
 
 export const PostRoutes = router;

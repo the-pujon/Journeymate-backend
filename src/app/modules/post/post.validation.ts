@@ -31,3 +31,11 @@ export const getPostsByUserIdValidation = z.object({
     sortOrder: z.enum(["asc", "desc"]).optional().default("desc"),
   }),
 });
+
+export const getPostByIdValidation = z.object({
+  params: z.object({
+    id: z.string().refine((val) => Types.ObjectId.isValid(val), {
+      message: "Invalid post ID",
+    }),
+  }),
+});

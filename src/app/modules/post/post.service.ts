@@ -152,8 +152,26 @@ const getPostsByUserId = async (
   return posts;
 };
 
+const getPostById = async (id: string): Promise<TPost | null> => {
+  const post = await Post.findById(id).populate({
+    path: "author",
+    select: "user profilePicture bio verified",
+    populate: {
+      path: "user",
+      select: "name email",
+    },
+  });
+
+  if (!post) {
+    throw new AppError(httpStatus.NOT_FOUND, "Post not found");
+  }
+
+  return post;
+};
+
 export const PostService = {
   createPost,
   getPosts,
   getPostsByUserId,
+  getPostById,
 };
