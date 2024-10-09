@@ -122,7 +122,38 @@ const getPosts = async ({
   return posts;
 };
 
+const getPostsByUserId = async (
+  userId: string,
+  sortOrder: "asc" | "desc",
+): Promise<TPost[]> => {
+  const userProfile = await UserProfile.findOne({
+    user: new Types.ObjectId(userId),
+  });
+
+  if (!userProfile) {
+    throw new AppError(httpStatus.NOT_FOUND, "User profile not found");
+  }
+
+  const sortOptions: { [key: string]: "asc" | "desc" } = {
+    upVotes: sortOrder,
+  };
+
+  const posts = await Post.find({ author: userProfile._id })
+    .sort(sortOptions)
+    .populate({
+      path: "author",
+      select: "user profilePicture bio verified",
+      populate: {
+        path: "user",
+        select: "name email",
+      },
+    });
+
+  return posts;
+};
+
 export const PostService = {
   createPost,
   getPosts,
+  getPostsByUserId,
 };

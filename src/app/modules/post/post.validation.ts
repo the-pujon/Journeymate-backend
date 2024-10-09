@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { Types } from "mongoose";
 
 export const createPostValidation = z.object({
   body: z.object({
@@ -16,6 +17,17 @@ export const getPostsValidation = z.object({
     category: z.string().optional(),
     author: z.string().optional(),
     searchTerm: z.string().optional(),
-    sortOrder: z.enum(['asc', 'desc']).optional().default('desc'),
+    sortOrder: z.enum(["asc", "desc"]).optional().default("desc"),
+  }),
+});
+
+export const getPostsByUserIdValidation = z.object({
+  params: z.object({
+    userId: z.string().refine((val) => Types.ObjectId.isValid(val), {
+      message: "Invalid user ID",
+    }),
+  }),
+  query: z.object({
+    sortOrder: z.enum(["asc", "desc"]).optional().default("desc"),
   }),
 });
