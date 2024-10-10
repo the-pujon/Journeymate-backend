@@ -7,7 +7,12 @@ import globalErrorHandler from "./app/middlewares/globalErrorHandler";
 const app: Application = express();
 
 app.use(express.json());
-app.use(cors());
+app.use(
+  cors({
+    origin: process.env.NEXT_PUBLIC_FRONTEND_URL,
+    credentials: true,
+  }),
+);
 
 app.use("/api", router);
 
