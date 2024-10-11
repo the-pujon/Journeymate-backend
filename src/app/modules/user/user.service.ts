@@ -4,43 +4,71 @@ import { Types } from "mongoose";
 import AppError from "../../errors/AppError";
 import httpStatus from "http-status";
 import { AuthModel } from "../auth/auth.model";
+import path from "path";
 
 const getUsers = async (searchQuery?: string): Promise<TUserProfile[]> => {
   // Define the search filter if a search query is provided
   const filter = searchQuery
     ? {
         $or: [
-          { name: { $regex: new RegExp(searchQuery, "i") } },
-          { email: { $regex: new RegExp(searchQuery, "i") } },
+          { "user.name": { $regex: new RegExp(searchQuery, "i") } },
+          { "user.email": { $regex: new RegExp(searchQuery, "i") } },
         ],
       }
     : {};
 
   // Fetch the user profiles and populate the user, followers, and following fields
-  const users = await UserProfile.find(filter)
-    .populate({
-      path: "user", // Populate the user field from the 'users' collection
-      select: "_id name email", // Only select _id, name, and email
-    })
-    .populate({
-      path: "following.userProfile",
-      select: "user verified profilePicture",
-      populate: {
-        path: "user",
-        select: "name email",
+  const users = await UserProfile.aggregate([
+    {
+      $lookup: {
+        from: "users", // Assuming the collection name for users is "users"
+        localField: "user",
+        foreignField: "_id",
+        as: "user",
       },
-    })
-    .populate({
-      path: "followers.userProfile",
-      select: "user verified profilePicture",
-      populate: {
-        path: "user",
-        select: "name email",
+    },
+    { $unwind: "$user" },
+    { $match: filter },
+    {
+      $lookup: {
+        from: "userprofiles",
+        localField: "following.userProfile",
+        foreignField: "_id",
+        as: "following",
       },
-    });
-  //.select(
-  //  "_id profilePicture bio verified following followers createdAt updatedAt",
-  //); // Select only the necessary fields from UserProfile
+    },
+    {
+      $lookup: {
+        from: "userprofiles",
+        localField: "followers.userProfile",
+        foreignField: "_id",
+        as: "followers",
+      },
+    },
+    {
+      $project: {
+        _id: 1,
+        user: { _id: 1, name: 1, email: 1 },
+        profilePicture: 1,
+        bio: 1,
+        verified: 1,
+        following: {
+          _id: 1,
+          user: { _id: 1, name: 1, email: 1 },
+          verified: 1,
+          profilePicture: 1,
+        },
+        followers: {
+          _id: 1,
+          user: { _id: 1, name: 1, email: 1 },
+          verified: 1,
+          profilePicture: 1,
+        },
+        createdAt: 1,
+        updatedAt: 1,
+      },
+    },
+  ]);
 
   return users;
 };
@@ -50,7 +78,7 @@ const getUserById = async (userId: string): Promise<TUserProfile | null> => {
     .populate("user", "name email")
     .populate({
       path: "following.userProfile",
-      select: "user verified profilePicture",
+      //select: "user verified profilePicture",
       populate: {
         path: "user",
         select: "name email",
@@ -58,11 +86,14 @@ const getUserById = async (userId: string): Promise<TUserProfile | null> => {
     })
     .populate({
       path: "followers.userProfile",
-      select: "user verified profilePicture",
+      //select: "user verified profilePicture",
       populate: {
         path: "user",
         select: "name email",
       },
+    })
+    .populate({
+      path: "posts.post",
     });
 
   if (!user) {
@@ -134,9 +165,14 @@ const updateUserFollowing = async (
     const followerProfile = await UserProfile.findOne({
       user: new Types.ObjectId(followerUserId),
     }).session(session);
+
+    console.log("followerProfile", followerProfile);
+
     const followingProfile = await UserProfile.findOne({
       user: new Types.ObjectId(followingUserId),
     }).session(session);
+
+    console.log("followingProfile", followingProfile);
 
     if (!followerProfile || !followingProfile) {
       throw new AppError(httpStatus.NOT_FOUND, "User profile not found");
@@ -200,9 +236,14 @@ const unfollowUser = async (
     const followerProfile = await UserProfile.findOne({
       user: new Types.ObjectId(followerUserId),
     }).session(session);
+
+    console.log("followerProfile", followerProfile);
+
     const unfollowedProfile = await UserProfile.findOne({
       user: new Types.ObjectId(unfollowUserId),
     }).session(session);
+
+    console.log("unfollowedProfile", unfollowedProfile);
 
     if (!followerProfile || !unfollowedProfile) {
       throw new AppError(httpStatus.NOT_FOUND, "User profile not found");

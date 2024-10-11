@@ -55,7 +55,7 @@ const createPost = async (
     // Populate the author field
     await createdPost.populate({
       path: "author",
-      select: "user profilePicture bio verified", // Select the fields you want to include
+      //select: "user profilePicture bio verified", // Select the fields you want to include
       populate: {
         path: "user",
         select: "name email", // Populate user details you want to include
@@ -103,11 +103,38 @@ const getPosts = async ({
   }
 
   if (searchTerm) {
+    const searchRegex = new RegExp(searchTerm, "i");
     query.$or = [
-      { title: { $regex: searchTerm, $options: "i" } },
-      { content: { $regex: searchTerm, $options: "i" } },
-      { tags: { $in: [new RegExp(searchTerm, "i")] } },
+      { title: { $regex: searchRegex } },
+      { content: { $regex: searchRegex } },
+      { tags: { $in: [searchRegex] } },
     ];
+
+    // Search for author name in UserProfile
+    const matchingProfiles = await UserProfile.aggregate([
+      {
+        $lookup: {
+          from: "users", // The name of your users collection
+          localField: "user",
+          foreignField: "_id",
+          as: "userDetails",
+        },
+      },
+      {
+        $match: {
+          "userDetails.name": { $regex: searchRegex },
+        },
+      },
+      {
+        $project: { _id: 1 },
+      },
+    ]);
+
+    if (matchingProfiles.length > 0) {
+      query.$or.push({
+        author: { $in: matchingProfiles.map((profile) => profile._id) },
+      });
+    }
   }
 
   const sortOptions: { [key: string]: "asc" | "desc" } = {
@@ -118,11 +145,21 @@ const getPosts = async ({
     .sort(sortOptions)
     .populate({
       path: "author",
-      select: "user profilePicture bio verified",
-      populate: {
-        path: "user",
-        select: "name email",
-      },
+      populate: [
+        {
+          path: "user",
+          select: "name email",
+        },
+        {
+          path: "posts",
+          options: { limit: 2 },
+          populate: {
+            path: "post",
+            select:
+              "title createdAt image category tags premium upVotes downVotes totalComments",
+          },
+        },
+      ],
     });
 
   return posts;
@@ -148,11 +185,59 @@ const getPostsByUserId = async (
     .sort(sortOptions)
     .populate({
       path: "author",
-      select: "user profilePicture bio verified",
-      populate: {
-        path: "user",
-        select: "name email",
-      },
+      //select: "user profilePicture bio verified",
+      //populate: {
+      //  path: "user",
+      //  select: "name email",
+      //},
+      //populate: {
+      //  path: "posts",
+      //},
+      //populate: [
+      //  {
+      //    path: "user",
+      //    select: "name email",
+      //  },
+      //  {
+      //    path: "posts.post",
+      //    //options: { limit: 3 },
+      //    //perDocumentLimit: 2,
+      //    perDocumentLimit: 2,
+      //    //populate: {
+      //    //  path: "post",
+      //    //  select: "title createdAt",
+      //    //},
+      //  },
+      //],
+      //populate: [
+      //  {
+      //    path: "user",
+      //    select: "name email",
+      //  },
+      //  {
+      //    path: "posts.post",
+      //    perDocumentLimit: 2,
+      //    options: { limit: 2 },
+      //    select:
+      //      "title createdAt image category tags premium upVotes downVotes totalComments",
+      //  },
+      //],
+
+      populate: [
+        {
+          path: "user",
+          select: "name email",
+        },
+        {
+          path: "posts",
+          options: { limit: 2 },
+          populate: {
+            path: "post",
+            select:
+              "title createdAt image category tags premium upVotes downVotes totalComments",
+          },
+        },
+      ],
     });
 
   return posts;
@@ -162,10 +247,25 @@ const getPostById = async (id: string): Promise<TPost | null> => {
   const post = await Post.findById(id).populate({
     path: "author",
     select: "user profilePicture bio verified",
-    populate: {
-      path: "user",
-      select: "name email",
-    },
+    //populate: {
+    //  path: "user",
+    //  select: "name email",
+    //},
+    populate: [
+      {
+        path: "user",
+        select: "name email",
+      },
+      {
+        path: "posts",
+        options: { limit: 2 },
+        //populate: {
+        //  path: "post",
+        //  select:
+        //    "title createdAt image category tags premium upVotes downVotes totalComments",
+        //},
+      },
+    ],
   });
 
   if (!post) {

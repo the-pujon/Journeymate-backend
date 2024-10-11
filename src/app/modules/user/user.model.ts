@@ -32,9 +32,9 @@ const userProfileSchema = new Schema<TUserProfile>(
     ],
     posts: [
       {
-        author: {
+        post: {
           type: Schema.Types.ObjectId,
-          ref: "User",
+          ref: "Post",
         },
       },
     ],

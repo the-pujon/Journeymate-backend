@@ -10,19 +10,23 @@ export const updateUserProfileValidation = z.object({
 });
 
 export const updateUserFollowingValidation = z.object({
-  body: z.object({
-    followingId: z.string().refine((val) => Types.ObjectId.isValid(val), {
-      message: "Invalid followingId",
-    }),
-  }),
+  body: z
+    .object({
+      followingId: z.string().refine((val) => Types.ObjectId.isValid(val), {
+        message: "Invalid followingId",
+      }),
+    })
+    .optional(),
 });
 
 export const unfollowUserValidation = z.object({
-  body: z.object({
-    unfollowId: z.string().refine((val) => Types.ObjectId.isValid(val), {
-      message: "Invalid unfollowId",
-    }),
-  }),
+  body: z
+    .object({
+      unfollowId: z.string().refine((val) => Types.ObjectId.isValid(val), {
+        message: "Invalid unfollowId",
+      }),
+    })
+    .optional(),
 });
 
 export const verificationRequestValidation = z.object({
