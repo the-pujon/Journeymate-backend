@@ -74,7 +74,7 @@ interface GetPostsOptions {
   category?: string;
   author?: string;
   searchTerm?: string;
-  sortOrder: "asc" | "desc";
+  sortOrder?: "asc" | "desc";
 }
 
 const getPosts = async ({
@@ -137,37 +137,41 @@ const getPosts = async ({
     }
   }
 
-  const sortOptions: { [key: string]: "asc" | "desc" } = {
-    upVotes: sortOrder,
-  };
+  let postsQuery = Post.find(query);
 
-  const posts = await Post.find(query)
-    .sort(sortOptions)
-    .populate({
-      path: "author",
-      populate: [
-        {
-          path: "user",
-          select: "name email",
+  // Apply sorting only if sortOrder is specified
+  if (sortOrder) {
+    const sortOptions: { [key: string]: "asc" | "desc" } = {
+      upVotes: sortOrder,
+    };
+    postsQuery = postsQuery.sort(sortOptions);
+  }
+
+  const posts = await postsQuery.populate({
+    path: "author",
+    populate: [
+      {
+        path: "user",
+        select: "name email",
+      },
+      {
+        path: "posts",
+        options: { limit: 2 },
+        populate: {
+          path: "post",
+          select:
+            "title createdAt image category tags premium upVotes downVotes totalComments",
         },
-        {
-          path: "posts",
-          options: { limit: 2 },
-          populate: {
-            path: "post",
-            select:
-              "title createdAt image category tags premium upVotes downVotes totalComments",
-          },
-        },
-      ],
-    });
+      },
+    ],
+  });
 
   return posts;
 };
 
 const getPostsByUserId = async (
   userId: string,
-  sortOrder: "asc" | "desc",
+  sortOrder: "asc" | "desc" | undefined,
 ): Promise<TPost[]> => {
   const userProfile = await UserProfile.findOne({
     user: new Types.ObjectId(userId),
@@ -177,68 +181,34 @@ const getPostsByUserId = async (
     throw new AppError(httpStatus.NOT_FOUND, "User profile not found");
   }
 
-  const sortOptions: { [key: string]: "asc" | "desc" } = {
-    upVotes: sortOrder,
-  };
+  let query = Post.find({ author: userProfile._id });
 
-  const posts = await Post.find({ author: userProfile._id })
-    .sort(sortOptions)
-    .populate({
-      path: "author",
-      //select: "user profilePicture bio verified",
-      //populate: {
-      //  path: "user",
-      //  select: "name email",
-      //},
-      //populate: {
-      //  path: "posts",
-      //},
-      //populate: [
-      //  {
-      //    path: "user",
-      //    select: "name email",
-      //  },
-      //  {
-      //    path: "posts.post",
-      //    //options: { limit: 3 },
-      //    //perDocumentLimit: 2,
-      //    perDocumentLimit: 2,
-      //    //populate: {
-      //    //  path: "post",
-      //    //  select: "title createdAt",
-      //    //},
-      //  },
-      //],
-      //populate: [
-      //  {
-      //    path: "user",
-      //    select: "name email",
-      //  },
-      //  {
-      //    path: "posts.post",
-      //    perDocumentLimit: 2,
-      //    options: { limit: 2 },
-      //    select:
-      //      "title createdAt image category tags premium upVotes downVotes totalComments",
-      //  },
-      //],
+  // Apply sorting only if sortOrder is specified
+  if (sortOrder) {
+    const sortOptions: { [key: string]: "asc" | "desc" } = {
+      upVotes: sortOrder,
+    };
+    query = query.sort(sortOptions);
+  }
 
-      populate: [
-        {
-          path: "user",
-          select: "name email",
+  const posts = await query.populate({
+    path: "author",
+    populate: [
+      {
+        path: "user",
+        select: "name email",
+      },
+      {
+        path: "posts",
+        options: { limit: 2 },
+        populate: {
+          path: "post",
+          select:
+            "title createdAt image category tags premium upVotes downVotes totalComments",
         },
-        {
-          path: "posts",
-          options: { limit: 2 },
-          populate: {
-            path: "post",
-            select:
-              "title createdAt image category tags premium upVotes downVotes totalComments",
-          },
-        },
-      ],
-    });
+      },
+    ],
+  });
 
   return posts;
 };

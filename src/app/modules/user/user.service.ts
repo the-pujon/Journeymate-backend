@@ -21,7 +21,7 @@ const getUsers = async (searchQuery?: string): Promise<TUserProfile[]> => {
   const users = await UserProfile.aggregate([
     {
       $lookup: {
-        from: "users", // Assuming the collection name for users is "users"
+        from: "users",
         localField: "user",
         foreignField: "_id",
         as: "user",
@@ -34,7 +34,7 @@ const getUsers = async (searchQuery?: string): Promise<TUserProfile[]> => {
         from: "userprofiles",
         localField: "following.userProfile",
         foreignField: "_id",
-        as: "following",
+        as: "followingProfiles",
       },
     },
     {
@@ -42,7 +42,23 @@ const getUsers = async (searchQuery?: string): Promise<TUserProfile[]> => {
         from: "userprofiles",
         localField: "followers.userProfile",
         foreignField: "_id",
-        as: "followers",
+        as: "followerProfiles",
+      },
+    },
+    {
+      $lookup: {
+        from: "users",
+        localField: "followingProfiles.user",
+        foreignField: "_id",
+        as: "followingUsers",
+      },
+    },
+    {
+      $lookup: {
+        from: "users",
+        localField: "followerProfiles.user",
+        foreignField: "_id",
+        as: "followerUsers",
       },
     },
     {
@@ -53,16 +69,70 @@ const getUsers = async (searchQuery?: string): Promise<TUserProfile[]> => {
         bio: 1,
         verified: 1,
         following: {
-          _id: 1,
-          user: { _id: 1, name: 1, email: 1 },
-          verified: 1,
-          profilePicture: 1,
+          $map: {
+            input: "$followingProfiles",
+            as: "profile",
+            in: {
+              _id: "$$profile._id",
+              user: {
+                $let: {
+                  vars: {
+                    userObj: {
+                      $arrayElemAt: [
+                        {
+                          $filter: {
+                            input: "$followingUsers",
+                            cond: { $eq: ["$$this._id", "$$profile.user"] },
+                          },
+                        },
+                        0,
+                      ],
+                    },
+                  },
+                  in: {
+                    _id: "$$userObj._id",
+                    name: "$$userObj.name",
+                    email: "$$userObj.email",
+                  },
+                },
+              },
+              verified: "$$profile.verified",
+              profilePicture: "$$profile.profilePicture",
+            },
+          },
         },
         followers: {
-          _id: 1,
-          user: { _id: 1, name: 1, email: 1 },
-          verified: 1,
-          profilePicture: 1,
+          $map: {
+            input: "$followerProfiles",
+            as: "profile",
+            in: {
+              _id: "$$profile._id",
+              user: {
+                $let: {
+                  vars: {
+                    userObj: {
+                      $arrayElemAt: [
+                        {
+                          $filter: {
+                            input: "$followerUsers",
+                            cond: { $eq: ["$$this._id", "$$profile.user"] },
+                          },
+                        },
+                        0,
+                      ],
+                    },
+                  },
+                  in: {
+                    _id: "$$userObj._id",
+                    name: "$$userObj.name",
+                    email: "$$userObj.email",
+                  },
+                },
+              },
+              verified: "$$profile.verified",
+              profilePicture: "$$profile.profilePicture",
+            },
+          },
         },
         createdAt: 1,
         updatedAt: 1,
