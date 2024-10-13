@@ -13,7 +13,7 @@ router.post(
   PaymentController.createPayment,
 );
 
-router.get("/", authorization("admin", "user"), PaymentController.getPayments);
+router.get("/", PaymentController.getPayments);
 
 router.delete("/:id", authorization("admin"), PaymentController.deletePayment);
 
