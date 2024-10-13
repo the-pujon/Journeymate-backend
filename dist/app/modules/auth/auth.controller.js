@@ -36,7 +36,47 @@ const loginUser = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void
         data: result.user,
     });
 }));
+const requestPasswordRecovery = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const result = yield auth_service_1.UserService.requestPasswordRecovery(req.body.email);
+    (0, sendResponse_1.default)(res, {
+        success: true,
+        statusCode: http_status_1.default.OK,
+        message: "Recovery code sent",
+        data: result,
+    });
+}));
+const verifyRecoveryCode = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const result = yield auth_service_1.UserService.verifyRecoveryCode(req.body.email, req.body.code);
+    (0, sendResponse_1.default)(res, {
+        success: true,
+        statusCode: http_status_1.default.OK,
+        message: "Recovery code verified",
+        data: result,
+    });
+}));
+const resetPassword = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const result = yield auth_service_1.UserService.resetPassword(req.body.email, req.body.code, req.body.newPassword);
+    (0, sendResponse_1.default)(res, {
+        success: true,
+        statusCode: http_status_1.default.OK,
+        message: "Password reset successful",
+        data: result,
+    });
+}));
+const changePassword = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const result = yield auth_service_1.UserService.changePassword(req.user._id, req.body.currentPassword, req.body.newPassword);
+    (0, sendResponse_1.default)(res, {
+        success: true,
+        statusCode: http_status_1.default.OK,
+        message: "Password changed successfully",
+        data: result,
+    });
+}));
 exports.UserController = {
     signupUser,
     loginUser,
+    requestPasswordRecovery,
+    verifyRecoveryCode,
+    resetPassword,
+    changePassword,
 };

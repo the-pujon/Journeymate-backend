@@ -34,8 +34,13 @@ const authSchema = new mongoose_1.Schema({
         type: String,
         default: "user",
     },
-    totalBuy: {
+    recoveryCode: {
         type: String,
+        select: false,
+    },
+    recoveryCodeExpires: {
+        type: Date,
+        select: false,
     },
 });
 //hashing password before saving user data into db

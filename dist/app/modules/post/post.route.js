@@ -1,0 +1,21 @@
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.PostRoutes = void 0;
+const express_1 = __importDefault(require("express"));
+const post_controller_1 = require("./post.controller");
+const validateRequest_1 = __importDefault(require("../../middlewares/validateRequest"));
+const post_validation_1 = require("./post.validation");
+const authorization_1 = require("../../middlewares/authorization");
+const router = express_1.default.Router();
+router.post("/create", (0, authorization_1.authorization)("user"), (0, validateRequest_1.default)(post_validation_1.createPostValidation), post_controller_1.PostController.createPost);
+router.get("/", (0, validateRequest_1.default)(post_validation_1.getPostsValidation), post_controller_1.PostController.getPosts);
+router.get("/user/:userId", (0, validateRequest_1.default)(post_validation_1.getPostsByUserIdValidation), post_controller_1.PostController.getPostsByUserId);
+router.get("/:id", (0, validateRequest_1.default)(post_validation_1.getPostByIdValidation), post_controller_1.PostController.getPostById);
+router.patch("/:id", (0, authorization_1.authorization)("user"), (0, validateRequest_1.default)(post_validation_1.updatePostValidation), post_controller_1.PostController.updatePost);
+router.delete("/:id", (0, authorization_1.authorization)("admin", "user"), (0, validateRequest_1.default)(post_validation_1.deletePostValidation), post_controller_1.PostController.deletePost);
+router.post("/:id/upvote", (0, authorization_1.authorization)("user"), (0, validateRequest_1.default)(post_validation_1.upvotePostValidation), post_controller_1.PostController.upvotePost);
+router.post("/:id/downvote", (0, authorization_1.authorization)("user"), (0, validateRequest_1.default)(post_validation_1.downvotePostValidation), post_controller_1.PostController.downvotePost);
+exports.PostRoutes = router;
