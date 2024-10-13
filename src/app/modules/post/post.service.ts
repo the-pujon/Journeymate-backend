@@ -75,6 +75,8 @@ interface GetPostsOptions {
   author?: string;
   searchTerm?: string;
   sortOrder?: "asc" | "desc";
+  page?: number;
+  limit?: number;
 }
 
 const getPosts = async ({
@@ -82,7 +84,13 @@ const getPosts = async ({
   author,
   searchTerm,
   sortOrder,
-}: GetPostsOptions): Promise<TPost[]> => {
+  page = 1,
+  limit = 10,
+}: GetPostsOptions): Promise<{
+  posts: TPost[];
+  totalPosts: number;
+  hasMore: boolean;
+}> => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const query: any = {};
 
@@ -98,7 +106,7 @@ const getPosts = async ({
       query.author = userProfile._id;
     } else {
       // If no user profile found, return an empty array
-      return [];
+      return { posts: [], totalPosts: 0, hasMore: false };
     }
   }
 
@@ -137,14 +145,21 @@ const getPosts = async ({
     }
   }
 
-  let postsQuery = Post.find(query);
+  const skip = (page - 1) * limit;
+
+  const totalPosts = await Post.countDocuments(query);
+
+  let postsQuery = Post.find(query).skip(skip).limit(limit);
 
   // Apply sorting only if sortOrder is specified
   if (sortOrder) {
     const sortOptions: { [key: string]: "asc" | "desc" } = {
-      upVotes: sortOrder,
+      createdAt: sortOrder, // Change this to sort by creation date
     };
     postsQuery = postsQuery.sort(sortOptions);
+  } else {
+    // Default sort by createdAt in descending order
+    postsQuery = postsQuery.sort({ createdAt: -1 });
   }
 
   const posts = await postsQuery.populate({
@@ -166,7 +181,9 @@ const getPosts = async ({
     ],
   });
 
-  return posts;
+  const hasMore = totalPosts > skip + posts.length;
+
+  return { posts, totalPosts, hasMore };
 };
 
 const getPostsByUserId = async (
