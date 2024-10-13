@@ -203,8 +203,6 @@ const getPostsByUserId = async (
         options: { limit: 2 },
         populate: {
           path: "post",
-          select:
-            "title createdAt image category tags premium upVotes downVotes totalComments",
         },
       },
     ],
@@ -216,7 +214,7 @@ const getPostsByUserId = async (
 const getPostById = async (id: string): Promise<TPost | null> => {
   const post = await Post.findById(id).populate({
     path: "author",
-    select: "user profilePicture bio verified",
+    select: "user profilePicture bio verified following followers",
     //populate: {
     //  path: "user",
     //  select: "name email",
@@ -228,12 +226,6 @@ const getPostById = async (id: string): Promise<TPost | null> => {
       },
       {
         path: "posts",
-        options: { limit: 2 },
-        //populate: {
-        //  path: "post",
-        //  select:
-        //    "title createdAt image category tags premium upVotes downVotes totalComments",
-        //},
       },
     ],
   });

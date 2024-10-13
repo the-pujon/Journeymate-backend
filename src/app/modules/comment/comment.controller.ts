@@ -6,9 +6,14 @@ import { CommentService } from "./comment.service";
 
 const createComment = catchAsync(async (req: Request, res: Response) => {
   const userId = req.user?._id;
-  const { content, post } = req.body;
+  const { content, post, parentComment } = req.body;
 
-  const result = await CommentService.createComment(userId, content, post);
+  const result = await CommentService.createComment(
+    userId,
+    content,
+    post,
+    parentComment,
+  );
 
   sendResponse(res, {
     statusCode: httpStatus.CREATED,
@@ -56,7 +61,22 @@ const deleteComment = catchAsync(async (req: Request, res: Response) => {
     statusCode: httpStatus.OK,
     success: true,
     message: "Comment deleted successfully",
-    data: [],
+    data: null,
+  });
+});
+
+const voteComment = catchAsync(async (req: Request, res: Response) => {
+  const userId = req.user?._id;
+  const { commentId } = req.params;
+  const { voteType } = req.body;
+
+  const result = await CommentService.voteComment(userId, commentId, voteType);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Comment voted successfully",
+    data: result,
   });
 });
 
@@ -65,4 +85,5 @@ export const CommentController = {
   getCommentsByPostId,
   editComment,
   deleteComment,
+  voteComment,
 };

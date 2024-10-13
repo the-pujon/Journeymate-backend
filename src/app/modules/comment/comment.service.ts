@@ -1,100 +1,68 @@
 import { Types } from "mongoose";
 import Comment from "./comment.model";
-import Post from "../post/post.model";
-import UserProfile from "../user/user.model";
-import { TComment } from "./comment.interface";
 import AppError from "../../errors/AppError";
 import httpStatus from "http-status";
+import UserProfile from "../user/user.model";
+import Post from "../post/post.model";
 
 const createComment = async (
   userId: string,
   content: string,
   postId: string,
-): Promise<TComment> => {
-  const session = await Comment.startSession();
-  session.startTransaction();
-
-  try {
-    const post = await Post.findById(postId).session(session);
-    if (!post) {
-      throw new AppError(httpStatus.NOT_FOUND, "Post not found");
-    }
-
-    const userProfile = await UserProfile.findOne({
-      user: new Types.ObjectId(userId),
-    }).session(session);
-    if (!userProfile) {
-      throw new AppError(httpStatus.NOT_FOUND, "User profile not found");
-    }
-
-    const newComment = await Comment.create(
-      [
-        {
-          author: post.author, // Author is from the post
-          content,
-          post: new Types.ObjectId(postId),
-          user: new Types.ObjectId(userId), // User who created the comment
-        },
-      ],
-      { session },
-    );
-
-    if (!newComment || newComment.length === 0) {
-      throw new AppError(httpStatus.BAD_REQUEST, "Failed to create comment");
-    }
-
-    // Increment the totalComments count and add the comment ID to the comments array in the post
-    await Post.findByIdAndUpdate(
-      postId,
-      {
-        $inc: { totalComments: 1 },
-        $push: { comments: { comment: newComment[0]._id } },
-      },
-      { session },
-    );
-
-    await session.commitTransaction();
-    return newComment[0];
-  } catch (error) {
-    await session.abortTransaction();
-    throw error;
-  } finally {
-    session.endSession();
+  parentCommentId?: string,
+) => {
+  const userProfile = await UserProfile.findOne({ user: userId });
+  if (!userProfile) {
+    throw new AppError(httpStatus.NOT_FOUND, "User profile not found");
   }
+
+  const comment = await Comment.create({
+    author: userProfile._id,
+    content,
+    post: postId,
+    user: userId,
+    parentComment: parentCommentId,
+  });
+
+  // Update the post's totalComments and comments array
+  await Post.findByIdAndUpdate(postId, {
+    $inc: { totalComments: 1 },
+    $push: { comments: { comment: comment._id } },
+  });
+
+  if (parentCommentId) {
+    await Comment.findByIdAndUpdate(parentCommentId, {
+      $push: { replies: comment._id },
+    });
+  }
+
+  return comment;
 };
 
-const getCommentsByPostId = async (postId: string): Promise<TComment[]> => {
-  const comments = await Comment.find({ post: new Types.ObjectId(postId) })
-    .sort({ createdAt: -1 })
+const getCommentsByPostId = async (postId: string) => {
+  return Comment.find({ post: postId, parentComment: null })
+    .populate("author", "name avatar")
     .populate({
-      path: "user",
-      select: "name email",
-    })
-    .populate({
-      path: "author",
-      select: "user profilePicture bio verified",
+      path: "replies",
       populate: {
-        path: "user",
-        select: "name email",
+        path: "author",
+        select: "name avatar",
       },
-    });
-
-  return comments;
+    })
+    .sort({ createdAt: -1 });
 };
 
 const editComment = async (
   userId: string,
   commentId: string,
   content: string,
-): Promise<TComment> => {
+) => {
   const comment = await Comment.findById(commentId);
-
   if (!comment) {
     throw new AppError(httpStatus.NOT_FOUND, "Comment not found");
   }
 
-  // Check if the user is the author of the comment
-  if (comment.user!.toString() !== userId) {
+  if (comment.user.toString() !== userId) {
     throw new AppError(
       httpStatus.FORBIDDEN,
       "You are not authorized to edit this comment",
@@ -107,48 +75,52 @@ const editComment = async (
   return comment;
 };
 
-const deleteComment = async (
+const deleteComment = async (userId: string, commentId: string) => {
+  const comment = await Comment.findById(commentId);
+  if (!comment) {
+    throw new AppError(httpStatus.NOT_FOUND, "Comment not found");
+  }
+
+  if (comment.user.toString() !== userId) {
+    throw new AppError(
+      httpStatus.FORBIDDEN,
+      "You are not authorized to delete this comment",
+    );
+  }
+
+  await Comment.deleteOne({ _id: commentId });
+
+  // Update the post's totalComments and comments array
+  await Post.findByIdAndUpdate(comment.post, {
+    $inc: { totalComments: -1 },
+    $pull: { comments: { comment: commentId } },
+  });
+
+  if (comment.parentComment) {
+    await Comment.findByIdAndUpdate(comment.parentComment, {
+      $pull: { replies: commentId },
+    });
+  }
+};
+
+const voteComment = async (
   userId: string,
   commentId: string,
-): Promise<void> => {
-  const session = await Comment.startSession();
-  session.startTransaction();
-
-  try {
-    const comment = await Comment.findById(commentId).session(session);
-
-    if (!comment) {
-      throw new AppError(httpStatus.NOT_FOUND, "Comment not found");
-    }
-
-    // Check if the user is the author of the comment
-    if (comment.user!.toString() !== userId) {
-      throw new AppError(
-        httpStatus.FORBIDDEN,
-        "You are not authorized to delete this comment",
-      );
-    }
-
-    // Delete the comment
-    await Comment.findByIdAndDelete(commentId).session(session);
-
-    // Decrease the totalComments count in the post and remove the comment ID from the comments array
-    await Post.findByIdAndUpdate(
-      comment.post,
-      {
-        $inc: { totalComments: -1 },
-        $pull: { comments: { comment: new Types.ObjectId(commentId) } },
-      },
-      { session },
-    );
-
-    await session.commitTransaction();
-  } catch (error) {
-    await session.abortTransaction();
-    throw error;
-  } finally {
-    session.endSession();
+  voteType: "up" | "down",
+) => {
+  const comment = await Comment.findById(commentId);
+  if (!comment) {
+    throw new AppError(httpStatus.NOT_FOUND, "Comment not found");
   }
+
+  if (voteType === "up") {
+    comment.upVotes += 1;
+  } else {
+    comment.downVotes += 1;
+  }
+
+  await comment.save();
+  return comment;
 };
 
 export const CommentService = {
@@ -156,4 +128,5 @@ export const CommentService = {
   getCommentsByPostId,
   editComment,
   deleteComment,
+  voteComment,
 };

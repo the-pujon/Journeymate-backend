@@ -5,7 +5,7 @@ const commentSchema = new Schema<TComment>(
   {
     author: {
       type: Schema.Types.ObjectId,
-      ref: "UserProfile",
+      ref: "User",
       required: true,
     },
     content: {
@@ -30,6 +30,16 @@ const commentSchema = new Schema<TComment>(
       ref: "User",
       required: true,
     },
+    parentComment: {
+      type: Schema.Types.ObjectId,
+      ref: "Comment",
+    },
+    replies: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "Comment",
+      },
+    ],
   },
   {
     timestamps: true,

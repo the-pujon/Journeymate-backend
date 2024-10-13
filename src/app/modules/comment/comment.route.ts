@@ -6,6 +6,7 @@ import {
   getCommentsByPostIdValidation,
   editCommentValidation,
   deleteCommentValidation,
+  voteCommentValidation,
 } from "./comment.validation";
 import { authorization } from "../../middlewares/authorization";
 
@@ -36,6 +37,13 @@ router.delete(
   authorization("user"),
   validateRequest(deleteCommentValidation),
   CommentController.deleteComment,
+);
+
+router.post(
+  "/:commentId/vote",
+  authorization("user"),
+  validateRequest(voteCommentValidation),
+  CommentController.voteComment,
 );
 
 export const CommentRoutes = router;
