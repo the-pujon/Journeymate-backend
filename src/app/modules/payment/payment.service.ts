@@ -67,6 +67,7 @@ const createPayment = async (
       session.endSession();
 
       if (
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (error as any).message.includes("Write conflict") &&
         retries < MAX_RETRIES - 1
       ) {

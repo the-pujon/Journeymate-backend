@@ -1,4 +1,3 @@
-import { Types } from "mongoose";
 import Comment from "./comment.model";
 import AppError from "../../errors/AppError";
 import httpStatus from "http-status";
@@ -11,9 +10,7 @@ const createComment = async (
   postId: string,
   parentCommentId?: string,
 ) => {
-  console.log("userId", userId);
   const userProfile = await UserProfile.findOne({ user: userId });
-  console.log("userProfile", userProfile);
   if (!userProfile) {
     throw new AppError(httpStatus.NOT_FOUND, "User profile not found");
   }

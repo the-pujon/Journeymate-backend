@@ -242,7 +242,6 @@ const updatePost = async (
   userId: string,
   updateData: Partial<TPost>,
 ): Promise<TPost | null> => {
-  console.log("updateData", updateData);
   // Find the user's profile
   const userProfile = await UserProfile.findOne({
     user: new Types.ObjectId(userId),

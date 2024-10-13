@@ -4,7 +4,6 @@ import { Types } from "mongoose";
 import AppError from "../../errors/AppError";
 import httpStatus from "http-status";
 import { AuthModel } from "../auth/auth.model";
-import path from "path";
 
 const getUsers = async (searchQuery?: string): Promise<TUserProfile[]> => {
   // Define the search filter if a search query is provided
@@ -236,13 +235,9 @@ const updateUserFollowing = async (
       user: new Types.ObjectId(followerUserId),
     }).session(session);
 
-    console.log("followerProfile", followerProfile);
-
     const followingProfile = await UserProfile.findOne({
       user: new Types.ObjectId(followingUserId),
     }).session(session);
-
-    console.log("followingProfile", followingProfile);
 
     if (!followerProfile || !followingProfile) {
       throw new AppError(httpStatus.NOT_FOUND, "User profile not found");
@@ -307,13 +302,9 @@ const unfollowUser = async (
       user: new Types.ObjectId(followerUserId),
     }).session(session);
 
-    console.log("followerProfile", followerProfile);
-
     const unfollowedProfile = await UserProfile.findOne({
       user: new Types.ObjectId(unfollowUserId),
     }).session(session);
-
-    console.log("unfollowedProfile", unfollowedProfile);
 
     if (!followerProfile || !unfollowedProfile) {
       throw new AppError(httpStatus.NOT_FOUND, "User profile not found");

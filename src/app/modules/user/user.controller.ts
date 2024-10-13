@@ -6,8 +6,7 @@ import { UserService } from "./user.service";
 
 const getUsers = catchAsync(async (req: Request, res: Response) => {
   const { searchQuery } = req.query;
-  console.log(searchQuery);
-  console.log(req.query);
+
   const result = await UserService.getUsers(searchQuery as string);
 
   sendResponse(res, {
@@ -68,9 +67,8 @@ const updateUserFollowing = catchAsync(async (req: Request, res: Response) => {
 });
 
 const unfollowUser = catchAsync(async (req: Request, res: Response) => {
-  const followerId = req.user?._id; // Assuming the user ID is attached to the request by auth middleware
+  const followerId = req.user?._id;
   const { unfollowId } = req.body;
-  console.log(followerId, unfollowId);
 
   const result = await UserService.unfollowUser(followerId, unfollowId);
 
