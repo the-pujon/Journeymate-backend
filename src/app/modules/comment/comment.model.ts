@@ -40,6 +40,14 @@ const commentSchema = new Schema<TComment>(
         ref: "Comment",
       },
     ],
+    isUpVoted: {
+      type: Boolean,
+      default: false,
+    },
+    isDownVoted: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     timestamps: true,

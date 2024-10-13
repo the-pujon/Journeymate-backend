@@ -9,4 +9,6 @@ export interface TComment {
   user: Types.ObjectId;
   parentComment?: Types.ObjectId;
   replies?: Types.ObjectId[];
+  isDownVoted: boolean;
+  isUpVoted: boolean;
 }
