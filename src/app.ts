@@ -23,6 +23,13 @@ app.get("/", (req, res) => {
   });
 });
 
+app.post("/api/payment/success", async (req, res) => {
+  const transactionId = `TXN-${Date.now()}`;
+  res.redirect(
+    `${process.env.NEXT_PUBLIC_FRONTEND_URL}/success?transactionId=${transactionId}`,
+  );
+});
+
 app.use(notFoundRouteHandler);
 app.use(globalErrorHandler);
 
