@@ -8,13 +8,13 @@ const router = express.Router();
 
 router.post(
   "/create-payment",
-  authorization(), // Add authentication middleware
+  authorization("user", "admin"), // Add authentication middleware
   validateRequest(PaymentValidation.createPaymentZodSchema),
   PaymentController.createPayment,
 );
 
-router.get("/", PaymentController.getPayments);
+router.get("/", authorization("admin", "user"), PaymentController.getPayments);
 
-router.delete("/:id", PaymentController.deletePayment);
+router.delete("/:id", authorization("admin"), PaymentController.deletePayment);
 
 export const PaymentRoutes = router;

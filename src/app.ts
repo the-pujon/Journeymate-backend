@@ -30,6 +30,13 @@ app.post("/api/payment/success", async (req, res) => {
   );
 });
 
+app.post("/api/payment/failure", (req, res) => {
+  const transactionId = `TXN-${Date.now()}`;
+  res.redirect(
+    `${process.env.NEXT_PUBLIC_FRONTEND_URL}/fail?transactionId=${transactionId}`,
+  );
+});
+
 app.use(notFoundRouteHandler);
 app.use(globalErrorHandler);
 

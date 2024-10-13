@@ -46,4 +46,6 @@ router.post(
   CommentController.voteComment,
 );
 
+router.get("/", CommentController.getComment);
+
 export const CommentRoutes = router;

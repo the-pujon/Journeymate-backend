@@ -4,11 +4,12 @@ import catchAsync from "../../utils/catchAsync";
 import sendResponse from "../../utils/sendResponse";
 
 const createPayment = catchAsync(async (req: Request, res: Response) => {
-  const result = await PaymentService.createPayment(req.body);
+  const userId = req?.user._id; // Assuming the user ID is stored here after authentication
+  const result = await PaymentService.createPayment(userId, req.body);
   sendResponse(res, {
     statusCode: 201,
     success: true,
-    message: "Payment created successfully",
+    message: "Payment created successfully and user verified",
     data: result,
   });
 });

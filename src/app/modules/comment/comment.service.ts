@@ -11,7 +11,9 @@ const createComment = async (
   postId: string,
   parentCommentId?: string,
 ) => {
+  console.log("userId", userId);
   const userProfile = await UserProfile.findOne({ user: userId });
+  console.log("userProfile", userProfile);
   if (!userProfile) {
     throw new AppError(httpStatus.NOT_FOUND, "User profile not found");
   }
@@ -41,12 +43,20 @@ const createComment = async (
 
 const getCommentsByPostId = async (postId: string) => {
   return Comment.find({ post: postId, parentComment: null })
-    .populate("author", "name avatar")
+    .populate({
+      path: "author",
+      populate: {
+        path: "user",
+      },
+    })
     .populate({
       path: "replies",
       populate: {
         path: "author",
-        select: "name avatar",
+        populate: {
+          path: "user",
+        },
+        //select: "name avatar",
       },
     })
     .sort({ createdAt: -1 });
@@ -145,10 +155,31 @@ const voteComment = async (
   return comment;
 };
 
+const getCommentService = async () => {
+  return Comment.find()
+    .populate({
+      path: "author",
+      populate: {
+        path: "user",
+      },
+    })
+    .populate({
+      path: "replies",
+      populate: {
+        path: "author",
+        populate: {
+          path: "user",
+        },
+        //select: "name avatar",
+      },
+    });
+};
+
 export const CommentService = {
   createComment,
   getCommentsByPostId,
   editComment,
   deleteComment,
   voteComment,
+  getCommentService,
 };

@@ -80,10 +80,22 @@ const voteComment = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const getComment = catchAsync(async (req: Request, res: Response) => {
+  const result = await CommentService.getCommentService();
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Comments retrieved successfully",
+    data: result,
+  });
+});
+
 export const CommentController = {
   createComment,
   getCommentsByPostId,
   editComment,
   deleteComment,
   voteComment,
+  getComment,
 };
