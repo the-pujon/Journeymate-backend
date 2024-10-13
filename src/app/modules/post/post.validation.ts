@@ -52,11 +52,13 @@ export const getPostByIdValidation = z.object({
 });
 
 export const updatePostValidation = z.object({
-  params: z.object({
-    id: z.string().refine((val) => Types.ObjectId.isValid(val), {
-      message: "Invalid post ID",
-    }),
-  }),
+  params: z
+    .object({
+      id: z.string().refine((val) => Types.ObjectId.isValid(val), {
+        message: "Invalid post ID",
+      }),
+    })
+    .optional(),
   body: z
     .object({
       title: z.string().min(1).max(255).optional(),

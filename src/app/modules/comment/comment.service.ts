@@ -114,9 +114,31 @@ const voteComment = async (
   }
 
   if (voteType === "up") {
+    if (comment.isUpVoted) {
+      throw new AppError(
+        httpStatus.BAD_REQUEST,
+        "You have already upvoted this comment",
+      );
+    }
     comment.upVotes += 1;
+    if (comment.isDownVoted) {
+      comment.downVotes -= 1;
+    }
+    comment.isUpVoted = true;
+    comment.isDownVoted = false;
   } else {
+    if (comment.isDownVoted) {
+      throw new AppError(
+        httpStatus.BAD_REQUEST,
+        "You have already downvoted this comment",
+      );
+    }
     comment.downVotes += 1;
+    if (comment.isUpVoted) {
+      comment.upVotes -= 1;
+    }
+    comment.isDownVoted = true;
+    comment.isUpVoted = false;
   }
 
   await comment.save();
