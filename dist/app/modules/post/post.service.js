@@ -63,7 +63,7 @@ const createPost = (userId, postData) => __awaiter(void 0, void 0, void 0, funct
             //select: "user profilePicture bio verified", // Select the fields you want to include
             populate: {
                 path: "user",
-                select: "name email", // Populate user details you want to include
+                select: "name email",
             },
         });
         return createdPost;
@@ -74,12 +74,14 @@ const createPost = (userId, postData) => __awaiter(void 0, void 0, void 0, funct
         throw error;
     }
 });
-const getPosts = (_a) => __awaiter(void 0, [_a], void 0, function* ({ category, author, searchTerm, sortOrder, }) {
+const getPosts = (_a) => __awaiter(void 0, [_a], void 0, function* ({ category, author, searchTerm, sortOrder = "desc", page = 1, limit = 10, currentUserId, }) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const query = {};
+    // Category filter
     if (category) {
         query.category = category;
     }
+    // Author filter
     if (author) {
         const userProfile = yield user_model_1.default.findOne({
             user: new mongoose_1.Types.ObjectId(author),
@@ -88,10 +90,10 @@ const getPosts = (_a) => __awaiter(void 0, [_a], void 0, function* ({ category, 
             query.author = userProfile._id;
         }
         else {
-            // If no user profile found, return an empty array
-            return [];
+            return { posts: [], totalPosts: 0, hasMore: false };
         }
     }
+    // Search functionality
     if (searchTerm) {
         const searchRegex = new RegExp(searchTerm, "i");
         query.$or = [
@@ -103,7 +105,7 @@ const getPosts = (_a) => __awaiter(void 0, [_a], void 0, function* ({ category, 
         const matchingProfiles = yield user_model_1.default.aggregate([
             {
                 $lookup: {
-                    from: "users", // The name of your users collection
+                    from: "users",
                     localField: "user",
                     foreignField: "_id",
                     as: "userDetails",
@@ -124,15 +126,34 @@ const getPosts = (_a) => __awaiter(void 0, [_a], void 0, function* ({ category, 
             });
         }
     }
-    let postsQuery = post_model_1.default.find(query);
-    // Apply sorting only if sortOrder is specified
-    if (sortOrder) {
-        const sortOptions = {
-            upVotes: sortOrder,
-        };
-        postsQuery = postsQuery.sort(sortOptions);
+    // Premium post handling
+    let userIsVerified = false;
+    if (currentUserId) {
+        const currentUserProfile = yield user_model_1.default.findOne({
+            user: new mongoose_1.Types.ObjectId(currentUserId),
+        });
+        userIsVerified = (currentUserProfile === null || currentUserProfile === void 0 ? void 0 : currentUserProfile.verified) || false;
     }
-    const posts = yield postsQuery.populate({
+    if (!userIsVerified) {
+        query.premium = { $ne: true };
+    }
+    const skip = (page - 1) * limit;
+    // Count total posts
+    const totalPosts = yield post_model_1.default.countDocuments(query);
+    // Sorting
+    let sortOptions = {};
+    if (sortOrder === "asc" || sortOrder === "desc") {
+        sortOptions = { createdAt: sortOrder };
+    }
+    else {
+        sortOptions = { createdAt: "desc" }; // Default sort
+    }
+    // Execute query
+    const posts = yield post_model_1.default.find(query)
+        .sort(sortOptions)
+        .skip(skip)
+        .limit(limit)
+        .populate({
         path: "author",
         populate: [
             {
@@ -149,7 +170,8 @@ const getPosts = (_a) => __awaiter(void 0, [_a], void 0, function* ({ category, 
             },
         ],
     });
-    return posts;
+    const hasMore = totalPosts > skip + posts.length;
+    return { posts, totalPosts, hasMore };
 });
 const getPostsByUserId = (userId, sortOrder) => __awaiter(void 0, void 0, void 0, function* () {
     const userProfile = yield user_model_1.default.findOne({
@@ -385,6 +407,10 @@ const downvotePost = (postId, userId) => __awaiter(void 0, void 0, void 0, funct
         session.endSession();
     }
 });
+const getAllPosts = () => __awaiter(void 0, void 0, void 0, function* () {
+    const posts = yield post_model_1.default.find();
+    return posts;
+});
 exports.PostService = {
     createPost,
     getPosts,
@@ -394,4 +420,5 @@ exports.PostService = {
     deletePost,
     upvotePost,
     downvotePost,
+    getAllPosts,
 };

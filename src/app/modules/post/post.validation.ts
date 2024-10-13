@@ -67,7 +67,7 @@ export const updatePostValidation = z.object({
       category: z.string().min(1).optional(),
       tags: z.array(z.string()).optional(),
     })
-    .strict(), // This ensures no extra fields are allowed
+    .strict(),
 });
 
 export const deletePostValidation = z.object({

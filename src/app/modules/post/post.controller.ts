@@ -19,13 +19,24 @@ const createPost = catchAsync(async (req: Request, res: Response) => {
 });
 
 const getPosts = catchAsync(async (req: Request, res: Response) => {
-  const { category, author, searchTerm, sortOrder = undefined } = req.query;
+  const {
+    category,
+    author,
+    searchTerm,
+    sortOrder,
+    page = 1,
+    limit = 10,
+  } = req.query;
+  const currentUserId = req.user?._id;
 
   const result = await PostService.getPosts({
     category: category as string,
     author: author as string,
     searchTerm: searchTerm as string,
     sortOrder: sortOrder as "asc" | "desc" | undefined,
+    page: Number(page),
+    limit: Number(limit),
+    currentUserId,
   });
 
   sendResponse(res, {
@@ -124,6 +135,17 @@ const downvotePost = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const getAllPosts = catchAsync(async (req: Request, res: Response) => {
+  const result = await PostService.getAllPosts();
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "All posts retrieved successfully",
+    data: result,
+  });
+});
+
 export const PostController = {
   createPost,
   getPosts,
@@ -133,4 +155,5 @@ export const PostController = {
   deletePost,
   upvotePost,
   downvotePost,
+  getAllPosts,
 };

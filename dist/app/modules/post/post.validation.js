@@ -65,7 +65,7 @@ exports.updatePostValidation = zod_1.z.object({
         category: zod_1.z.string().min(1).optional(),
         tags: zod_1.z.array(zod_1.z.string()).optional(),
     })
-        .strict(), // This ensures no extra fields are allowed
+        .strict(),
 });
 exports.deletePostValidation = zod_1.z.object({
     params: zod_1.z

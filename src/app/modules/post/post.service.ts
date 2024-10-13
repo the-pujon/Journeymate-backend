@@ -58,7 +58,7 @@ const createPost = async (
       //select: "user profilePicture bio verified", // Select the fields you want to include
       populate: {
         path: "user",
-        select: "name email", // Populate user details you want to include
+        select: "name email",
       },
     });
 
@@ -77,15 +77,17 @@ interface GetPostsOptions {
   sortOrder?: "asc" | "desc";
   page?: number;
   limit?: number;
+  currentUserId?: string;
 }
 
 const getPosts = async ({
   category,
   author,
   searchTerm,
-  sortOrder,
+  sortOrder = "desc",
   page = 1,
   limit = 10,
+  currentUserId,
 }: GetPostsOptions): Promise<{
   posts: TPost[];
   totalPosts: number;
@@ -94,10 +96,12 @@ const getPosts = async ({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const query: any = {};
 
+  // Category filter
   if (category) {
     query.category = category;
   }
 
+  // Author filter
   if (author) {
     const userProfile = await UserProfile.findOne({
       user: new Types.ObjectId(author),
@@ -105,11 +109,11 @@ const getPosts = async ({
     if (userProfile) {
       query.author = userProfile._id;
     } else {
-      // If no user profile found, return an empty array
       return { posts: [], totalPosts: 0, hasMore: false };
     }
   }
 
+  // Search functionality
   if (searchTerm) {
     const searchRegex = new RegExp(searchTerm, "i");
     query.$or = [
@@ -122,7 +126,7 @@ const getPosts = async ({
     const matchingProfiles = await UserProfile.aggregate([
       {
         $lookup: {
-          from: "users", // The name of your users collection
+          from: "users",
           localField: "user",
           foreignField: "_id",
           as: "userDetails",
@@ -145,41 +149,55 @@ const getPosts = async ({
     }
   }
 
-  const skip = (page - 1) * limit;
-
-  const totalPosts = await Post.countDocuments(query);
-
-  let postsQuery = Post.find(query).skip(skip).limit(limit);
-
-  // Apply sorting only if sortOrder is specified
-  if (sortOrder) {
-    const sortOptions: { [key: string]: "asc" | "desc" } = {
-      createdAt: sortOrder, // Change this to sort by creation date
-    };
-    postsQuery = postsQuery.sort(sortOptions);
-  } else {
-    // Default sort by createdAt in descending order
-    postsQuery = postsQuery.sort({ createdAt: -1 });
+  // Premium post handling
+  let userIsVerified = false;
+  if (currentUserId) {
+    const currentUserProfile = await UserProfile.findOne({
+      user: new Types.ObjectId(currentUserId),
+    });
+    userIsVerified = currentUserProfile?.verified || false;
   }
 
-  const posts = await postsQuery.populate({
-    path: "author",
-    populate: [
-      {
-        path: "user",
-        select: "name email",
-      },
-      {
-        path: "posts",
-        options: { limit: 2 },
-        populate: {
-          path: "post",
-          select:
-            "title createdAt image category tags premium upVotes downVotes totalComments",
+  if (!userIsVerified) {
+    query.premium = { $ne: true };
+  }
+
+  const skip = (page - 1) * limit;
+
+  // Count total posts
+  const totalPosts = await Post.countDocuments(query);
+
+  // Sorting
+  let sortOptions: { [key: string]: "asc" | "desc" } = {};
+  if (sortOrder === "asc" || sortOrder === "desc") {
+    sortOptions = { createdAt: sortOrder };
+  } else {
+    sortOptions = { createdAt: "desc" }; // Default sort
+  }
+
+  // Execute query
+  const posts = await Post.find(query)
+    .sort(sortOptions)
+    .skip(skip)
+    .limit(limit)
+    .populate({
+      path: "author",
+      populate: [
+        {
+          path: "user",
+          select: "name email",
         },
-      },
-    ],
-  });
+        {
+          path: "posts",
+          options: { limit: 2 },
+          populate: {
+            path: "post",
+            select:
+              "title createdAt image category tags premium upVotes downVotes totalComments",
+          },
+        },
+      ],
+    });
 
   const hasMore = totalPosts > skip + posts.length;
 
@@ -493,6 +511,11 @@ const downvotePost = async (postId: string, userId: string): Promise<TPost> => {
   }
 };
 
+const getAllPosts = async (): Promise<TPost[]> => {
+  const posts = await Post.find();
+  return posts;
+};
+
 export const PostService = {
   createPost,
   getPosts,
@@ -502,4 +525,5 @@ export const PostService = {
   deletePost,
   upvotePost,
   downvotePost,
+  getAllPosts,
 };

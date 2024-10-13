@@ -8,7 +8,7 @@ const router = express.Router();
 
 router.get(
   "/:postId",
-  authorization("user"),
+  authorization("user", "admin"),
   validateRequest(getVoteValidation),
   VoteController.getVote,
 );

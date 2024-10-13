@@ -30,12 +30,17 @@ const createPost = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, voi
     });
 }));
 const getPosts = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const { category, author, searchTerm, sortOrder = undefined } = req.query;
+    var _a;
+    const { category, author, searchTerm, sortOrder, page = 1, limit = 10, } = req.query;
+    const currentUserId = (_a = req.user) === null || _a === void 0 ? void 0 : _a._id;
     const result = yield post_service_1.PostService.getPosts({
         category: category,
         author: author,
         searchTerm: searchTerm,
         sortOrder: sortOrder,
+        page: Number(page),
+        limit: Number(limit),
+        currentUserId,
     });
     (0, sendResponse_1.default)(res, {
         statusCode: http_status_1.default.OK,
@@ -115,6 +120,15 @@ const downvotePost = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, v
         data: result,
     });
 }));
+const getAllPosts = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const result = yield post_service_1.PostService.getAllPosts();
+    (0, sendResponse_1.default)(res, {
+        statusCode: http_status_1.default.OK,
+        success: true,
+        message: "All posts retrieved successfully",
+        data: result,
+    });
+}));
 exports.PostController = {
     createPost,
     getPosts,
@@ -124,4 +138,5 @@ exports.PostController = {
     deletePost,
     upvotePost,
     downvotePost,
+    getAllPosts,
 };

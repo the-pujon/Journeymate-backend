@@ -11,11 +11,12 @@ import { authorization } from "../../middlewares/authorization";
 
 const router = express.Router();
 
-router.get("/", UserController.getUsers);
-router.get("/:id", UserController.getUserById);
+router.get("/", authorization("admin", "user"), UserController.getUsers);
+router.get("/:id", authorization("admin", "user"), UserController.getUserById);
 router.patch(
   "/:id",
   validateRequest(updateUserProfileValidation),
+  authorization("admin", "user"),
   UserController.updateUserProfile,
 );
 

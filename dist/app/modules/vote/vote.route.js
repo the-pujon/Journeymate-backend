@@ -10,5 +10,5 @@ const validateRequest_1 = __importDefault(require("../../middlewares/validateReq
 const vote_validation_1 = require("./vote.validation");
 const authorization_1 = require("../../middlewares/authorization");
 const router = express_1.default.Router();
-router.get("/:postId", (0, authorization_1.authorization)("user"), (0, validateRequest_1.default)(vote_validation_1.getVoteValidation), vote_controller_1.VoteController.getVote);
+router.get("/:postId", (0, authorization_1.authorization)("user", "admin"), (0, validateRequest_1.default)(vote_validation_1.getVoteValidation), vote_controller_1.VoteController.getVote);
 exports.VoteRoutes = router;

@@ -364,7 +364,6 @@ const unfollowUser = async (
   }
 };
 
-//TODO: Test this
 const requestVerification = async (
   userId: string,
   paymentIntentId: string,
@@ -388,7 +387,6 @@ const requestVerification = async (
     );
   }
 
-  // TODO: Implement actual payment verification with AAMARPAY or Stripe
   if (!paymentIntentId) {
     throw new AppError(
       httpStatus.BAD_REQUEST,

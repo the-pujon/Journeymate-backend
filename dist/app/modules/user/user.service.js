@@ -313,7 +313,6 @@ const unfollowUser = (followerUserId, unfollowUserId) => __awaiter(void 0, void 
         throw error;
     }
 });
-//TODO: Test this
 const requestVerification = (userId, paymentIntentId) => __awaiter(void 0, void 0, void 0, function* () {
     const userProfile = yield user_model_1.default.findOne({
         user: new mongoose_1.Types.ObjectId(userId),
@@ -327,7 +326,6 @@ const requestVerification = (userId, paymentIntentId) => __awaiter(void 0, void 
     if (userProfile.totalUpvotes < 1) {
         throw new AppError_1.default(http_status_1.default.BAD_REQUEST, "User must have at least 1 upvote to request verification");
     }
-    // TODO: Implement actual payment verification with AAMARPAY or Stripe
     if (!paymentIntentId) {
         throw new AppError_1.default(http_status_1.default.BAD_REQUEST, "Payment information is missing");
     }

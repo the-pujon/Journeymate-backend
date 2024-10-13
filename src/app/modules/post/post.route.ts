@@ -17,28 +17,35 @@ const router = express.Router();
 
 router.post(
   "/create",
-  authorization("user"),
+  authorization("user", "admin"),
   validateRequest(createPostValidation),
   PostController.createPost,
 );
 
-router.get("/", validateRequest(getPostsValidation), PostController.getPosts);
+router.get(
+  "/",
+  authorization("user", "admin"),
+  validateRequest(getPostsValidation),
+  PostController.getPosts,
+);
 
 router.get(
   "/user/:userId",
+  authorization("user", "admin"),
   validateRequest(getPostsByUserIdValidation),
   PostController.getPostsByUserId,
 );
 
 router.get(
   "/:id",
+  authorization("user", "admin"),
   validateRequest(getPostByIdValidation),
   PostController.getPostById,
 );
 
 router.patch(
   "/:id",
-  authorization("user"),
+  authorization("user", "admin"),
   validateRequest(updatePostValidation),
   PostController.updatePost,
 );
@@ -52,16 +59,18 @@ router.delete(
 
 router.post(
   "/:id/upvote",
-  authorization("user"),
+  authorization("user", "admin"),
   validateRequest(upvotePostValidation),
   PostController.upvotePost,
 );
 
 router.post(
   "/:id/downvote",
-  authorization("user"),
+  authorization("user", "admin"),
   validateRequest(downvotePostValidation),
   PostController.downvotePost,
 );
+
+router.get("/allPosts/all", authorization("admin"), PostController.getAllPosts);
 
 export const PostRoutes = router;

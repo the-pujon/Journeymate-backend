@@ -14,38 +14,39 @@ const router = express.Router();
 
 router.post(
   "/create",
-  authorization("user"),
+  authorization("user", "admin"),
   validateRequest(createCommentValidation),
   CommentController.createComment,
 );
 
 router.get(
   "/post/:postId",
+  authorization("user", "admin"),
   validateRequest(getCommentsByPostIdValidation),
   CommentController.getCommentsByPostId,
 );
 
 router.patch(
   "/:commentId",
-  authorization("user"),
+  authorization("user", "admin"),
   validateRequest(editCommentValidation),
   CommentController.editComment,
 );
 
 router.delete(
   "/:commentId",
-  authorization("user"),
+  authorization("user", "admin"),
   validateRequest(deleteCommentValidation),
   CommentController.deleteComment,
 );
 
 router.post(
   "/:commentId/vote",
-  authorization("user"),
+  authorization("user", "admin"),
   validateRequest(voteCommentValidation),
   CommentController.voteComment,
 );
 
-router.get("/", CommentController.getComment);
+router.get("/", authorization("admin", "user"), CommentController.getComment);
 
 export const CommentRoutes = router;
